@@ -32,9 +32,10 @@ model Usuario {
   role      Role     @default(CLIENTE)
   criadoEm  DateTime @default(now())
 
-  pedidos        Pedido[]
-  refreshTokens  RefreshToken[]
-  historicos     HistoricoStatus[]
+  pedidos                Pedido[]
+  refreshTokens          RefreshToken[]
+  historicos             HistoricoStatus[]
+  janelasDisponibilidade DisponibilidadeJanela[] @relation("JanelasDisponibilidade")
 
   @@map("usuarios")
 }
@@ -55,6 +56,8 @@ model Servico {
   atualizadoEm              DateTime @updatedAt
 
   pedidos                   Pedido[]
+  janelasDisponiveis        DisponibilidadeServicoJanela[]
+  horariosDisponiveis       HorarioDisponivel[]
 
   @@map("servicos")
 }
@@ -94,6 +97,7 @@ model Pedido {
   servico              Servico @relation(fields: [servicoId], references: [id])
 
   historico            HistoricoStatus[]
+  horariosDisponiveis  HorarioDisponivel[]
 
   // ÍNDICES (performance)
   @@index([data])
@@ -139,4 +143,79 @@ model RefreshToken {
 
   @@index([usuarioId])
   @@map("refresh_tokens")
+}
+
+// DISPONIBILIDADE - JANELA DE AGENDA
+
+model DisponibilidadeJanela {
+  id                    String   @id @default(uuid())
+  
+  data                  DateTime @db.Date
+  horaInicio            DateTime @db.Time
+  horaFim               DateTime @db.Time
+  
+  ativo                 Boolean  @default(true)
+  
+  criadoEm              DateTime @default(now())
+  atualizadoEm          DateTime @updatedAt
+  
+  // RELAÇÕES
+  manicureId            String
+  manicure              Usuario  @relation("JanelasDisponibilidade", fields: [manicureId], references: [id], onDelete: Cascade)
+  
+  servicosPermitidos    DisponibilidadeServicoJanela[]
+  horariosDisponiveis   HorarioDisponivel[]
+  
+  @@index([manicureId])
+  @@index([data])
+  @@index([ativo])
+  @@map("disponibilidade_janelas")
+}
+
+// RELACIONAMENTO MANY-TO-MANY: SERVIÇO X JANELA
+
+model DisponibilidadeServicoJanela {
+  id                        String   @id @default(uuid())
+  
+  criadoEm                  DateTime @default(now())
+  
+  // RELAÇÕES
+  disponibilidadeJanelaId   String
+  janelaDisponivel          DisponibilidadeJanela @relation(fields: [disponibilidadeJanelaId], references: [id], onDelete: Cascade)
+  
+  servicoId                 String
+  servico                   Servico @relation(fields: [servicoId], references: [id], onDelete: Cascade)
+  
+  @@unique([disponibilidadeJanelaId, servicoId])
+  @@index([disponibilidadeJanelaId])
+  @@index([servicoId])
+  @@map("disponibilidade_servico_janelas")
+}
+
+// HORÁRIO DISPONÍVEL CALCULADO
+
+model HorarioDisponivel {
+  id                    String   @id @default(uuid())
+  
+  horaInicio            DateTime @db.Time
+  horaFim               DateTime @db.Time
+  
+  // Controle de reserva
+  pedidoId              String?
+  pedido                Pedido?  @relation(fields: [pedidoId], references: [id], onDelete: SetNull)
+  
+  criadoEm              DateTime @default(now())
+  atualizadoEm          DateTime @updatedAt
+  
+  // RELAÇÕES
+  disponibilidadeJanelaId String
+  janelaDisponivel      DisponibilidadeJanela @relation(fields: [disponibilidadeJanelaId], references: [id], onDelete: Cascade)
+  
+  servicoId             String
+  servico               Servico @relation(fields: [servicoId], references: [id], onDelete: Cascade)
+  
+  @@index([disponibilidadeJanelaId])
+  @@index([servicoId])
+  @@index([pedidoId])
+  @@map("horarios_disponiveis")
 }
