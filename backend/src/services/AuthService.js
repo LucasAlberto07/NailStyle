@@ -220,13 +220,3 @@ export function validarToken(token) {
     throw new Error('Token inválido ou expirado');
   }
 }
-
-export {
-  cadastrarUsuario,
-  login,
-  refreshToken,
-  logout,
-  gerarAccessToken,
-  gerarRefreshToken,
-  validarToken,
-};

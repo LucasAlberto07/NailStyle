@@ -1,4 +1,4 @@
-import { prisma } from '../config/prisma.js';
+import prisma from '../config/prisma.js';
 
 class DisponibilidadeService {
   /**
@@ -21,6 +21,20 @@ class DisponibilidadeService {
     // Validar horários
     this._validarHorarios(horaInicio, horaFim);
 
+    // Buscar os serviços para calcular os horários
+    const servicos = await prisma.servico.findMany({
+      where: {
+        id: {
+          in: servicosIds,
+        },
+        ativo: true,
+      },
+    });
+
+    if (servicos.length !== new Set(servicosIds).size) {
+      throw new Error('Um ou mais serviços permitidos não existem ou estão inativos');
+    }
+
     // Criar a janela
     const janelaDisponivel = await prisma.disponibilidadeJanela.create({
       data: {
@@ -39,15 +53,6 @@ class DisponibilidadeService {
           include: {
             servico: true,
           },
-        },
-      },
-    });
-
-    // Buscar os serviços para calcular os horários
-    const servicos = await prisma.servico.findMany({
-      where: {
-        id: {
-          in: servicosIds,
         },
       },
     });
@@ -227,7 +232,7 @@ class DisponibilidadeService {
 
     horarios.forEach((h) => {
       const janelaId = h.janelaDisponivel.id;
-      
+
       if (!agrupadoPorJanela[janelaId]) {
         agrupadoPorJanela[janelaId] = {
           janelaId: h.janelaDisponivel.id,
@@ -306,18 +311,23 @@ class DisponibilidadeService {
       throw new Error('Este horário já foi reservado');
     }
 
+    if (servicoId && servicoId !== horarioDisponivel.servicoId) {
+      throw new Error('O serviço informado não corresponde ao horário escolhido');
+    }
+
+    const horaFimAtendimento = new Date(
+      horarioDisponivel.horaInicio.getTime() + horarioDisponivel.servico.duracaoMinutos * 60000
+    );
+
     // Criar o pedido
     const pedido = await prisma.pedido.create({
       data: {
         usuarioId,
-        servicoId,
+        servicoId: horarioDisponivel.servicoId,
         data: horarioDisponivel.janelaDisponivel.data,
         horaInicio: horarioDisponivel.horaInicio,
-        horaFim: horarioDisponivel.horaFim,
-        horaFimComPreparacao: new Date(
-          horarioDisponivel.horaFim.getTime() +
-            horarioDisponivel.servico.tempoPreparacaoMinutos * 60000
-        ),
+        horaFim: horaFimAtendimento,
+        horaFimComPreparacao: horarioDisponivel.horaFim,
         valorBaseNoMomento: horarioDisponivel.servico.valorBase,
         status: 'AGENDADO',
       },
@@ -327,9 +337,14 @@ class DisponibilidadeService {
       },
     });
 
-    // Atualizar o horário disponível para marcar como reservado
-    await prisma.horarioDisponivel.update({
-      where: { id: horariosDisponivelId },
+    // Atualizar o horário disponível e os horários sobrepostos para marcar como reservado
+    await prisma.horarioDisponivel.updateMany({
+      where: {
+        disponibilidadeJanelaId: horarioDisponivel.disponibilidadeJanelaId,
+        pedidoId: null,
+        horaInicio: { lt: horarioDisponivel.horaFim },
+        horaFim: { gt: horarioDisponivel.horaInicio },
+      },
       data: {
         pedidoId: pedido.id,
       },
@@ -401,8 +416,41 @@ class DisponibilidadeService {
 
     // Se precisar atualizar os serviços
     if (servicosIds && servicosIds.length > 0) {
+      const horariosReservados = await prisma.horarioDisponivel.count({
+        where: {
+          disponibilidadeJanelaId: janelaId,
+          pedidoId: {
+            not: null,
+          },
+        },
+      });
+
+      if (horariosReservados > 0) {
+        throw new Error('Não é possível alterar serviços de uma janela com horários reservados');
+      }
+
+      const servicos = await prisma.servico.findMany({
+        where: {
+          id: {
+            in: servicosIds,
+          },
+          ativo: true,
+        },
+      });
+
+      if (servicos.length !== new Set(servicosIds).size) {
+        throw new Error('Um ou mais serviços permitidos não existem ou estão inativos');
+      }
+
       // Remover os serviços antigos
       await prisma.disponibilidadeServicoJanela.deleteMany({
+        where: {
+          disponibilidadeJanelaId: janelaId,
+        },
+      });
+
+      // Remover horários antigos
+      await prisma.horarioDisponivel.deleteMany({
         where: {
           disponibilidadeJanelaId: janelaId,
         },
@@ -415,6 +463,19 @@ class DisponibilidadeService {
           servicoId,
         })),
       });
+
+      const horaInicio = this._formatarHora(janelaAtualizada.horaInicio);
+      const horaFim = this._formatarHora(janelaAtualizada.horaFim);
+
+      // Gerar novos horários
+      for (const servico of servicos) {
+        await this._gerarHorariosDisponiveisParaServico(
+          janelaId,
+          servico,
+          horaInicio,
+          horaFim
+        );
+      }
     }
 
     return this.obterJanelaComHorarios(janelaId);
@@ -485,6 +546,12 @@ class DisponibilidadeService {
     const horas = Math.floor(minutos / 60);
     const mins = minutos % 60;
     return `${String(horas).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
+  }
+
+  _formatarHora(dataHora) {
+    return `${String(dataHora.getHours()).padStart(2, '0')}:${String(
+      dataHora.getMinutes()
+    ).padStart(2, '0')}`;
   }
 }
 
