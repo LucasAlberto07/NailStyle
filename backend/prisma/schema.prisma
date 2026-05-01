@@ -1,0 +1,221 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ENUMS
+
+enum Role {
+  ADMIN
+  CLIENTE
+}
+
+enum StatusPedido {
+  AGENDADO
+  EM_ATENDIMENTO
+  FINALIZADO
+  CANCELADO
+}
+
+// USUÁRIO
+
+model Usuario {
+  id        String   @id @default(uuid())
+  nome      String
+  email     String   @unique
+  senha     String
+  telefone  String?
+  role      Role     @default(CLIENTE)
+  criadoEm  DateTime @default(now())
+
+  pedidos                Pedido[]
+  refreshTokens          RefreshToken[]
+  historicos             HistoricoStatus[]
+  janelasDisponibilidade DisponibilidadeJanela[] @relation("JanelasDisponibilidade")
+
+  @@map("usuarios")
+}
+
+// SERVIÇO
+
+model Servico {
+  id                        String   @id @default(uuid())
+  nome                      String   @unique
+  descricao                 String?
+  categoria                 String?
+  valorBase                 Decimal  @db.Decimal(10,2)
+  duracaoMinutos            Int
+  tempoPreparacaoMinutos    Int      @default(0)
+  ativo                     Boolean  @default(true)
+
+  criadoEm                  DateTime @default(now())
+  atualizadoEm              DateTime @updatedAt
+
+  pedidos                   Pedido[]
+  janelasDisponiveis        DisponibilidadeServicoJanela[]
+  horariosDisponiveis       HorarioDisponivel[]
+
+  @@map("servicos")
+}
+
+// PEDIDO (AGENDAMENTO)
+
+model Pedido {
+  id                   String   @id @default(uuid())
+
+  descricao            String?
+
+  data                 DateTime
+  horaInicio           DateTime
+  horaFim              DateTime
+  horaFimComPreparacao DateTime
+
+  // tempo real 
+  iniciadoEm           DateTime?
+  finalizadoEm         DateTime?
+
+  status               StatusPedido @default(AGENDADO)
+
+  valorBaseNoMomento   Decimal  @db.Decimal(10,2)
+  valorFinal           Decimal? @db.Decimal(10,2)
+
+  canceladoEm          DateTime?
+  canceladoPorRole     Role?
+
+  criadoEm             DateTime @default(now())
+  atualizadoEm         DateTime @updatedAt
+
+  // RELAÇÕES
+  usuarioId            String
+  usuario              Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  servicoId            String
+  servico              Servico @relation(fields: [servicoId], references: [id])
+
+  historico            HistoricoStatus[]
+  horariosDisponiveis  HorarioDisponivel[]
+
+  // ÍNDICES (performance)
+  @@index([data])
+  @@index([status])
+  @@index([usuarioId])
+  @@index([horaInicio])
+  @@index([status, data])
+
+  @@map("pedidos")
+}
+
+// HISTÓRICO DE STATUS
+
+model HistoricoStatus {
+  id           String   @id @default(uuid())
+
+  pedidoId     String
+  pedido       Pedido   @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
+
+  statusAntes  StatusPedido
+  statusDepois StatusPedido
+
+  observacao   String?
+
+  alteradoEm   DateTime @default(now())
+
+  usuarioId    String?
+  usuario      Usuario? @relation(fields: [usuarioId], references: [id], onDelete: SetNull)
+
+  @@map("historico_status")
+}
+
+// REFRESH TOKEN
+
+model RefreshToken {
+  id         String   @id @default(uuid())
+  token      String   @unique
+  usuarioId  String
+  usuario    Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  criadoEm   DateTime @default(now())
+  expiresAt  DateTime
+
+  @@index([usuarioId])
+  @@map("refresh_tokens")
+}
+
+// DISPONIBILIDADE - JANELA DE AGENDA
+
+model DisponibilidadeJanela {
+  id                    String   @id @default(uuid())
+  
+  data                  DateTime @db.Date
+  horaInicio            DateTime @db.Time
+  horaFim               DateTime @db.Time
+  
+  ativo                 Boolean  @default(true)
+  
+  criadoEm              DateTime @default(now())
+  atualizadoEm          DateTime @updatedAt
+  
+  // RELAÇÕES
+  manicureId            String
+  manicure              Usuario  @relation("JanelasDisponibilidade", fields: [manicureId], references: [id], onDelete: Cascade)
+  
+  servicosPermitidos    DisponibilidadeServicoJanela[]
+  horariosDisponiveis   HorarioDisponivel[]
+  
+  @@index([manicureId])
+  @@index([data])
+  @@index([ativo])
+  @@map("disponibilidade_janelas")
+}
+
+// RELACIONAMENTO MANY-TO-MANY: SERVIÇO X JANELA
+
+model DisponibilidadeServicoJanela {
+  id                        String   @id @default(uuid())
+  
+  criadoEm                  DateTime @default(now())
+  
+  // RELAÇÕES
+  disponibilidadeJanelaId   String
+  janelaDisponivel          DisponibilidadeJanela @relation(fields: [disponibilidadeJanelaId], references: [id], onDelete: Cascade)
+  
+  servicoId                 String
+  servico                   Servico @relation(fields: [servicoId], references: [id], onDelete: Cascade)
+  
+  @@unique([disponibilidadeJanelaId, servicoId])
+  @@index([disponibilidadeJanelaId])
+  @@index([servicoId])
+  @@map("disponibilidade_servico_janelas")
+}
+
+// HORÁRIO DISPONÍVEL CALCULADO
+
+model HorarioDisponivel {
+  id                    String   @id @default(uuid())
+  
+  horaInicio            DateTime @db.Time
+  horaFim               DateTime @db.Time
+  
+  // Controle de reserva
+  pedidoId              String?
+  pedido                Pedido?  @relation(fields: [pedidoId], references: [id], onDelete: SetNull)
+  
+  criadoEm              DateTime @default(now())
+  atualizadoEm          DateTime @updatedAt
+  
+  // RELAÇÕES
+  disponibilidadeJanelaId String
+  janelaDisponivel      DisponibilidadeJanela @relation(fields: [disponibilidadeJanelaId], references: [id], onDelete: Cascade)
+  
+  servicoId             String
+  servico               Servico @relation(fields: [servicoId], references: [id], onDelete: Cascade)
+  
+  @@index([disponibilidadeJanelaId])
+  @@index([servicoId])
+  @@index([pedidoId])
+  @@map("horarios_disponiveis")
+}
