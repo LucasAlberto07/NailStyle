@@ -4,10 +4,11 @@ class DisponibilidadeController {
   // Cria uma janela para a manicure informada.
   async criarJanela(req, res) {
     try {
-      const manicureId = req.usuario?.id ?? req.body.manicureId;
+      const body = req.body ?? {};
+      const manicureId = req.usuario?.id ?? body.manicureId;
 
       const janela = await disponibilidadeService.criarJanelaDisponibilidade({
-        ...req.body,
+        ...body,
         manicureId,
       });
       return res.status(201).json(janela);
@@ -19,8 +20,9 @@ class DisponibilidadeController {
   // Lista janelas da manicure informada.
   async listarJanelas(req, res) {
     try {
-      const { data, ativo } = req.query;
-      const manicureId = req.usuario?.id ?? req.query.manicureId;
+      const query = req.query ?? {};
+      const { data, ativo } = query;
+      const manicureId = req.usuario?.id ?? query.manicureId;
       const filtros = {};
 
       if (!manicureId) {
@@ -41,12 +43,13 @@ class DisponibilidadeController {
     }
   }
 
-  // Obtém uma janela com os horários calculados.
+  // Obtem uma janela com os horarios calculados.
   async obterJanela(req, res) {
     try {
+      const query = req.query ?? {};
       const janela = await disponibilidadeService.obterJanelaComHorarios(
         req.params.janelaId,
-        req.usuario?.id ?? req.query.manicureId
+        req.usuario?.id ?? query.manicureId
       );
       return res.json(janela);
     } catch (error) {
@@ -54,13 +57,14 @@ class DisponibilidadeController {
     }
   }
 
-  // Atualiza uma janela e regenera horários quando necessário.
+  // Atualiza uma janela e regenera horarios quando necessario.
   async atualizarJanela(req, res) {
     try {
+      const body = req.body ?? {};
       const janela = await disponibilidadeService.atualizarJanela(
         req.params.janelaId,
-        req.body,
-        req.usuario?.id ?? req.body.manicureId
+        body,
+        req.usuario?.id ?? body.manicureId
       );
       return res.json(janela);
     } catch (error) {
@@ -71,9 +75,10 @@ class DisponibilidadeController {
   // Remove uma janela sem reservas ativas.
   async deletarJanela(req, res) {
     try {
+      const body = req.body ?? {};
       await disponibilidadeService.deletarJanela(
         req.params.janelaId,
-        req.usuario?.id ?? req.body.manicureId
+        req.usuario?.id ?? body.manicureId
       );
       return res.status(204).send();
     } catch (error) {
@@ -81,11 +86,12 @@ class DisponibilidadeController {
     }
   }
 
-  // Lista horários reserváveis para um serviço.
+  // Lista horarios reservaveis para um servico.
   async listarHorariosPorServico(req, res) {
     try {
       const { servicoId } = req.params;
-      const { data } = req.query;
+      const query = req.query ?? {};
+      const { data } = query;
 
       const horarios = data
         ? await disponibilidadeService.obterHorariosDisponivelsPorServico(servicoId, data)
@@ -97,15 +103,20 @@ class DisponibilidadeController {
     }
   }
 
-  // Reserva um dos horários oferecidos pelo sistema.
+  // Reserva um dos horarios oferecidos pelo sistema.
   async reservarHorario(req, res) {
     try {
-      const usuarioId = req.usuario?.id ?? req.body.usuarioId;
+      const body = req.body ?? {};
+      const usuarioId = req.usuario?.id ?? body.usuarioId;
+
+      if (!usuarioId || !body.servicoId) {
+        return res.status(400).json({ erro: 'usuarioId e servicoId sao obrigatorios' });
+      }
 
       const pedido = await disponibilidadeService.reservarHorario(
         req.params.horarioId,
         usuarioId,
-        req.body.servicoId
+        body.servicoId
       );
 
       return res.status(201).json(pedido);
@@ -117,7 +128,8 @@ class DisponibilidadeController {
   // Cancela uma reserva existente.
   async cancelarReserva(req, res) {
     try {
-      const usuario = req.usuario ?? req.body.usuario;
+      const body = req.body ?? {};
+      const usuario = req.usuario ?? body.usuario;
       const pedido = await disponibilidadeService.cancelarReserva(req.params.pedidoId, usuario);
       return res.json(pedido);
     } catch (error) {

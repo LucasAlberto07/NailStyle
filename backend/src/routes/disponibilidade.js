@@ -3,28 +3,28 @@ import disponibilidadeController from '../controllers/DisponibilidadeController.
 
 const router = Router();
 
-// POST /janelas
+// POST /disponibilidades/janelas
 router.post('/janelas', disponibilidadeController.criarJanela.bind(disponibilidadeController));
 
-// GET /janelas
+// GET /disponibilidades/janelas
 router.get('/janelas', disponibilidadeController.listarJanelas.bind(disponibilidadeController));
 
-// GET /janelas/:janelaId
+// GET /disponibilidades/janelas/:janelaId
 router.get('/janelas/:janelaId', disponibilidadeController.obterJanela.bind(disponibilidadeController));
 
-// PATCH /janelas/:janelaId
+// PATCH /disponibilidades/janelas/:janelaId
 router.patch('/janelas/:janelaId', disponibilidadeController.atualizarJanela.bind(disponibilidadeController));
 
-// DELETE /janelas/:janelaId
+// DELETE /disponibilidades/janelas/:janelaId
 router.delete('/janelas/:janelaId', disponibilidadeController.deletarJanela.bind(disponibilidadeController));
 
-// GET /servicos/:servicoId/horarios
+// GET /disponibilidades/servicos/:servicoId/horarios
 router.get('/servicos/:servicoId/horarios', disponibilidadeController.listarHorariosPorServico.bind(disponibilidadeController));
 
-// POST /horarios/:horarioId/reservar
+// POST /disponibilidades/horarios/:horarioId/reservar
 router.post('/horarios/:horarioId/reservar', disponibilidadeController.reservarHorario.bind(disponibilidadeController));
 
-// DELETE /reservas/:pedidoId
+// DELETE /disponibilidades/reservas/:pedidoId
 router.delete('/reservas/:pedidoId', disponibilidadeController.cancelarReserva.bind(disponibilidadeController));
 
 export default router;

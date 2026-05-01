@@ -4,6 +4,4 @@ node_modules
 
 /src/generated/prisma
 
-package-lock.json
-
 *.log

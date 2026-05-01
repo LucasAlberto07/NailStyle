@@ -3,22 +3,22 @@ import servicoController from '../controllers/ServicoController.js';
 
 const router = Router();
 
-// GET /admin
+// GET /servicos/admin
 router.get('/admin', servicoController.listarAdmin.bind(servicoController));
 
-// POST /
+// POST /servicos
 router.post('/', servicoController.criar.bind(servicoController));
 
-// GET /
+// GET /servicos
 router.get('/', servicoController.listar.bind(servicoController));
 
-// GET /:servicoId
+// GET /servicos/:servicoId
 router.get('/:servicoId', servicoController.buscarPorId.bind(servicoController));
 
-// PATCH /:servicoId
+// PATCH /servicos/:servicoId
 router.patch('/:servicoId', servicoController.atualizar.bind(servicoController));
 
-// DELETE /:servicoId
+// DELETE /servicos/:servicoId
 router.delete('/:servicoId', servicoController.desativar.bind(servicoController));
 
 export default router;
