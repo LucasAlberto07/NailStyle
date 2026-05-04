@@ -9,88 +9,76 @@ import {
 
 class ServicoController {
   // Cria um servico com duracao e tempo de preparacao.
-  async criar(req, res) {
+  // Requer: Autenticação + Role ADMIN
+  async criar(req, res, next) {
     try {
       const body = req.body ?? {};
       const usuario = req.usuario;
-
-      if (!usuario) {
-        return res.status(401).json({ erro: 'Autenticacao obrigatoria' });
-      }
 
       const servico = await criarServico(body, usuario);
       return res.status(201).json(servico);
     } catch (error) {
-      return res.status(400).json({ erro: error.message });
+      next(error);
     }
   }
 
   // Lista servicos ativos para clientes.
-  async listar(req, res) {
+  async listar(req, res, next) {
     try {
       const servicos = await listarServicos(true);
       return res.json(servicos);
     } catch (error) {
-      return res.status(400).json({ erro: error.message });
+      next(error);
     }
   }
 
   // Lista todos os servicos para administracao.
-  async listarAdmin(req, res) {
+  // Requer: Autenticação + Role ADMIN
+  async listarAdmin(req, res, next) {
     try {
       const usuario = req.usuario;
-
-      if (!usuario) {
-        return res.status(401).json({ erro: 'Autenticacao obrigatoria' });
-      }
 
       const servicos = await listarServicosAdmin(usuario);
       return res.json(servicos);
     } catch (error) {
-      return res.status(400).json({ erro: error.message });
+      next(error);
     }
   }
 
   // Busca um servico ativo pelo id.
-  async buscarPorId(req, res) {
+  async buscarPorId(req, res, next) {
     try {
       const servico = await buscarServicoPorId(req.params.servicoId);
       return res.json(servico);
     } catch (error) {
-      return res.status(404).json({ erro: error.message });
+      next(error);
     }
   }
 
   // Atualiza dados do servico.
-  async atualizar(req, res) {
+  // Requer: Autenticação + Role ADMIN
+  async atualizar(req, res, next) {
     try {
       const body = req.body ?? {};
       const usuario = req.usuario;
 
-      if (!usuario) {
-        return res.status(401).json({ erro: 'Autenticacao obrigatoria' });
-      }
-
       const servico = await atualizarServico(req.params.servicoId, body, usuario);
       return res.json(servico);
     } catch (error) {
-      return res.status(400).json({ erro: error.message });
+      next(error);
     }
   }
 
   // Desativa um servico.
-  async desativar(req, res) {
+  // Requer: Autenticação + Role ADMIN
+  async desativar(req, res, next) {
     try {
       const usuario = req.usuario;
-
-      if (!usuario) {
-        return res.status(401).json({ erro: 'Autenticacao obrigatoria' });
-      }
 
       const servico = await desativarServico(req.params.servicoId, usuario);
       return res.json(servico);
     } catch (error) {
-      return res.status(400).json({ erro: error.message });
+      next(error);
     }
   }
 }
