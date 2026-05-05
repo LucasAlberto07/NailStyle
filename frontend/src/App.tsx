@@ -15,7 +15,7 @@ function App() {
         <main className="w-full">
           <Routes>
             <Route path="/" element={<Login />} />
-            <Route path="/Dashboard" element={<Dashboard />} />
+            <Route path="/dashboard" element={<Dashboard />} />
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>
         </main>
