@@ -295,23 +295,6 @@ export default function Admin() {
     }
   }
 
-  function abrirEdicaoJanela(janela: Janela) {
-    setJanelaEmEdicao(janela);
-    setNovaJanela({
-      data: janela.data,
-      horaInicio: janela.horaInicio,
-      horaFim: janela.horaFim,
-      servicosIds: janela.servicosPermitidos?.map(s => s.id) || [],
-    });
-    setShowFormJanela(true);
-  }
-
-  function cancelarEdicaoJanela() {
-    setJanelaEmEdicao(null);
-    setNovaJanela({ data: "", horaInicio: "", horaFim: "", servicosIds: [] });
-    setShowFormJanela(false);
-  }
-
   async function handleAtualizarStatus(pedidoId: string, novoStatus: string, valorBase?: number) {
     try {
       // Se finalizando, precisa enviar valorFinal
