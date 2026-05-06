@@ -21,4 +21,7 @@ router.patch('/:pedidoId/status', pedidoController.atualizarStatus.bind(pedidoCo
 // DELETE /pedidos/:pedidoId
 router.delete('/:pedidoId', pedidoController.cancelar.bind(pedidoController));
 
+// GET /pedidos/:pedidoId/historico
+router.get('/:pedidoId/historico', pedidoController.obterHistorico.bind(pedidoController));
+
 export default router;

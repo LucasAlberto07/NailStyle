@@ -40,8 +40,8 @@ class DisponibilidadeService {
       data: {
         manicureId,
         data: new Date(data),
-        horaInicio: new Date(`2000-01-01T${horaInicio}`),
-        horaFim: new Date(`2000-01-01T${horaFim}`),
+        horaInicio: new Date(`2000-01-01T${horaInicio}:00Z`),
+        horaFim: new Date(`2000-01-01T${horaFim}:00Z`),
         servicosPermitidos: {
           create: servicosIds.map((servicoId) => ({
             servicoId,
@@ -62,6 +62,7 @@ class DisponibilidadeService {
       await this._gerarHorariosDisponiveisParaServico(
         janelaDisponivel.id,
         servico,
+        janelaDisponivel.data,
         horaInicio,
         horaFim
       );
@@ -78,6 +79,7 @@ class DisponibilidadeService {
   async _gerarHorariosDisponiveisParaServico(
     janelaId,
     servico,
+    data,
     horaInicio,
     horaFim
   ) {
@@ -99,8 +101,8 @@ class DisponibilidadeService {
       horariosDisponibles.push({
         disponibilidadeJanelaId: janelaId,
         servicoId: servico.id,
-        horaInicio: new Date(`2000-01-01T${horarioInicioStr}`),
-        horaFim: new Date(`2000-01-01T${horarioFimStr}`),
+        horaInicio: new Date(`2000-01-01T${horarioInicioStr}:00Z`),
+        horaFim: new Date(`2000-01-01T${horarioFimStr}:00Z`),
       });
 
       // Avançar para o próximo slot (começa quando este termina)
@@ -143,6 +145,13 @@ class DisponibilidadeService {
       throw new Error('Janela de disponibilidade não encontrada');
     }
 
+    // Formatar data como YYYY-MM-DD
+    const dataFormatada = janela.data.toISOString().split('T')[0];
+    
+    // Formatar horários como HH:MM
+    const horaInicioStr = this._formatarHora(janela.horaInicio);
+    const horaFimStr = this._formatarHora(janela.horaFim);
+
     // Agrupar horários por serviço
     const horariosAgrupados = {};
 
@@ -151,10 +160,13 @@ class DisponibilidadeService {
         horariosAgrupados[horario.servicoId] = [];
       }
 
+      const horaInicioHorario = this._formatarHora(horario.horaInicio);
+      const horaFimHorario = this._formatarHora(horario.horaFim);
+
       horariosAgrupados[horario.servicoId].push({
         id: horario.id,
-        horaInicio: horario.horaInicio,
-        horaFim: horario.horaFim,
+        horaInicio: horaInicioHorario,
+        horaFim: horaFimHorario,
         reservado: !!horario.pedidoId,
         pedidoId: horario.pedidoId,
       });
@@ -162,9 +174,9 @@ class DisponibilidadeService {
 
     return {
       id: janela.id,
-      data: janela.data,
-      horaInicio: janela.horaInicio,
-      horaFim: janela.horaFim,
+      data: dataFormatada,
+      horaInicio: horaInicioStr,
+      horaFim: horaFimStr,
       ativo: janela.ativo,
       servicosPermitidos: janela.servicosPermitidos.map((sp) => ({
         id: sp.servicoId,
@@ -200,7 +212,23 @@ class DisponibilidadeService {
       },
     });
 
-    return janelas;
+    return janelas.map((janela) => {
+      const dataFormatada = janela.data.toISOString().split('T')[0];
+      const horaInicioStr = this._formatarHora(janela.horaInicio);
+      const horaFimStr = this._formatarHora(janela.horaFim);
+
+      return {
+        id: janela.id,
+        data: dataFormatada,
+        horaInicio: horaInicioStr,
+        horaFim: horaFimStr,
+        ativo: janela.ativo,
+        servicosPermitidos: janela.servicosPermitidos.map((sp) => ({
+          id: sp.servicoId,
+          nome: sp.servico.nome,
+        })),
+      };
+    });
   }
 
   /**
@@ -227,30 +255,29 @@ class DisponibilidadeService {
       ],
     });
 
-    // Agrupar por data/janela
-    const agrupadoPorJanela = {};
-
-    horarios.forEach((h) => {
-      const janelaId = h.janelaDisponivel.id;
-
-      if (!agrupadoPorJanela[janelaId]) {
-        agrupadoPorJanela[janelaId] = {
-          janelaId: h.janelaDisponivel.id,
-          data: h.janelaDisponivel.data,
-          horaInicioJanela: h.janelaDisponivel.horaInicio,
-          horaFimJanela: h.janelaDisponivel.horaFim,
-          horarios: [],
-        };
-      }
-
-      agrupadoPorJanela[janelaId].horarios.push({
+    return horarios.map((h) => {
+      // Formatar data como YYYY-MM-DD
+      const dataJanela = h.janelaDisponivel.data;
+      const dataFormatada = dataJanela.toISOString().split('T')[0];
+      
+      // Formatar horários como HH:MM
+      const horaInicioStr = this._formatarHora(h.horaInicio);
+      const horaFimStr = this._formatarHora(h.horaFim);
+      
+      return {
         id: h.id,
-        horaInicio: h.horaInicio,
-        horaFim: h.horaFim,
-      });
+        data: dataFormatada,
+        horaInicio: horaInicioStr,
+        horaFim: horaFimStr,
+        disponivel: !h.pedidoId,
+        servico: {
+          id: h.servico.id,
+          nome: h.servico.nome,
+          duracao: h.servico.duracaoMinutos,
+          preparacao: h.servico.tempoPreparacaoMinutos,
+        },
+      };
     });
-
-    return Object.values(agrupadoPorJanela);
   }
 
   /**
@@ -276,17 +303,28 @@ class DisponibilidadeService {
       },
     });
 
-    return horarios.map((h) => ({
-      id: h.id,
-      horaInicio: h.horaInicio,
-      horaFim: h.horaFim,
-      servico: {
-        id: h.servico.id,
-        nome: h.servico.nome,
-        duracao: h.servico.duracaoMinutos,
-        preparacao: h.servico.tempoPreparacaoMinutos,
-      },
-    }));
+    return horarios.map((h) => {
+      // Formatar data como YYYY-MM-DD
+      const dataJanela = h.janelaDisponivel.data;
+      const dataFormatada = dataJanela.toISOString().split('T')[0];
+      
+      // Formatar horários como HH:MM
+      const horaInicioStr = this._formatarHora(h.horaInicio);
+      const horaFimStr = this._formatarHora(h.horaFim);
+      
+      return {
+        id: h.id,
+        data: dataFormatada,
+        horaInicio: horaInicioStr,
+        horaFim: horaFimStr,
+        servico: {
+          id: h.servico.id,
+          nome: h.servico.nome,
+          duracao: h.servico.duracaoMinutos,
+          preparacao: h.servico.tempoPreparacaoMinutos,
+        },
+      };
+    });
   }
 
   /**
@@ -394,12 +432,24 @@ class DisponibilidadeService {
    * Atualiza uma janela de disponibilidade
    */
   async atualizarJanela(janelaId, dados) {
-    const { ativo, servicosIds } = dados;
+    const { ativo, horaInicio, horaFim, servicosIds } = dados;
 
     const atualizacoes = {};
 
     if (ativo !== undefined) {
       atualizacoes.ativo = ativo;
+    }
+
+    // Validar e processar alteração de horários
+    if (horaInicio || horaFim) {
+      if (!horaInicio || !horaFim) {
+        throw new Error('Deve informar tanto horaInicio quanto horaFim');
+      }
+
+      this._validarHorarios(horaInicio, horaFim);
+
+      atualizacoes.horaInicio = new Date(`2000-01-01T${horaInicio}:00Z`);
+      atualizacoes.horaFim = new Date(`2000-01-01T${horaFim}:00Z`);
     }
 
     const janelaAtualizada = await prisma.disponibilidadeJanela.update({
@@ -413,6 +463,51 @@ class DisponibilidadeService {
         },
       },
     });
+
+    // Se houve alteração de horários, regenerar todos os horários disponíveis
+    if (horaInicio || horaFim) {
+      // Buscar serviços permitidos
+      const servicosPermitidos = await prisma.disponibilidadeServicoJanela.findMany({
+        where: { disponibilidadeJanelaId: janelaId },
+        include: { servico: true },
+      });
+
+      // Verificar se há horários com reservas
+      const horariosComReservas = await prisma.horarioDisponivel.count({
+        where: {
+          disponibilidadeJanelaId: janelaId,
+          pedidoId: {
+            not: null,
+          },
+        },
+      });
+
+      if (horariosComReservas > 0) {
+        throw new Error('Não é possível alterar os horários de uma janela com agendamentos realizados');
+      }
+
+      // Deletar horários antigos (que não têm reservas)
+      await prisma.horarioDisponivel.deleteMany({
+        where: { 
+          disponibilidadeJanelaId: janelaId,
+          pedidoId: null,
+        },
+      });
+
+      // Gerar novos horários com os novos tempos
+      const novaHoraInicio = horaInicio || this._formatarHora(janelaAtualizada.horaInicio);
+      const novaHoraFim = horaFim || this._formatarHora(janelaAtualizada.horaFim);
+
+      for (const sp of servicosPermitidos) {
+        await this._gerarHorariosDisponiveisParaServico(
+          janelaId,
+          sp.servico,
+          janelaAtualizada.data,
+          novaHoraInicio,
+          novaHoraFim
+        );
+      }
+    }
 
     // Se precisar atualizar os serviços
     if (servicosIds && servicosIds.length > 0) {
@@ -486,8 +581,8 @@ class DisponibilidadeService {
    * Só pode deletar se não houver reservas
    */
   async deletarJanela(janelaId) {
-    // Verificar se há horários reservados
-    const horariosReservados = await prisma.horarioDisponivel.count({
+    // Buscar todos os horários reservados da janela
+    const horariosReservados = await prisma.horarioDisponivel.findMany({
       where: {
         disponibilidadeJanelaId: janelaId,
         pedidoId: {
@@ -496,13 +591,39 @@ class DisponibilidadeService {
       },
     });
 
-    if (horariosReservados > 0) {
-      throw new Error(
-        'Não é possível deletar uma janela com horários já reservados'
-      );
+    // Se houver horários reservados, deletar os pedidos relacionados primeiro
+    if (horariosReservados.length > 0) {
+      const pedidoIds = horariosReservados
+        .filter(h => h.pedidoId)
+        .map(h => h.pedidoId);
+
+      if (pedidoIds.length > 0) {
+        // Deletar todos os pedidos relacionados
+        await prisma.pedido.deleteMany({
+          where: {
+            id: {
+              in: pedidoIds,
+            },
+          },
+        });
+      }
     }
 
-    // Deletar a janela (cascata vai remover horários e relacionamentos)
+    // Deletar todos os horários da janela
+    await prisma.horarioDisponivel.deleteMany({
+      where: {
+        disponibilidadeJanelaId: janelaId,
+      },
+    });
+
+    // Deletar os relacionamentos com serviços
+    await prisma.disponibilidadeServicoJanela.deleteMany({
+      where: {
+        disponibilidadeJanelaId: janelaId,
+      },
+    });
+
+    // Deletar a janela
     return await prisma.disponibilidadeJanela.delete({
       where: { id: janelaId },
     });

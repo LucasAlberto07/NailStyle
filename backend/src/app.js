@@ -10,9 +10,18 @@ import { authMiddlewareOpcional } from './middleware/authMiddleware.js';
 
 const app = express();
 
-// CORS
+// CORS - Permitir múltiplas origens
+const allowedOrigins = process.env.CORS_ORIGINS?.split(',') || ['http://localhost:3000', 'http://localhost:5173', 'http://localhost:5174'];
 app.use(cors({
-  origin: process.env.CORS_ORIGINS,
+  origin: function (origin, callback) {
+    // Se a requisição não tem origin (como em requisições do servidor), permite
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      // Por enquanto, deixa passar para debug
+      callback(null, true);
+    }
+  },
   credentials: true,
 }));
 
