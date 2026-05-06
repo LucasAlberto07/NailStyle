@@ -119,6 +119,7 @@ function validarDadosCriacao(dados) {
   const [dia, mes, ano] = data.split('-');
   const [horas, minutos] = hora.split(':');
   
+  // Criar data UTC: YYYY-MM-DD + HH:mm em UTC
   const horaInicio = new Date(`${data}T${hora}:00Z`);
   
   if (isNaN(horaInicio.getTime())) {
@@ -364,7 +365,27 @@ export async function listarPedidosDoUsuario(usuarioId) {
     },
   });
 
-  return pedidos;
+  // Normalizar campos de data/hora para o frontend (evita parse problemático/epoch)
+  return pedidos.map((p) => {
+    const horaInicioDate = new Date(p.horaInicio);
+    const dataDate = new Date(p.data);
+
+    // Usar o campo 'data' armazenado, que possui a data correta
+    const dataStr = !Number.isNaN(dataDate.getTime()) 
+      ? dataDate.toISOString().split('T')[0]
+      : '';
+
+    // Formatar hora em HH:MM
+    const horaStr = !Number.isNaN(horaInicioDate.getTime())
+      ? `${String(horaInicioDate.getUTCHours()).padStart(2, '0')}:${String(horaInicioDate.getUTCMinutes()).padStart(2, '0')}`
+      : '';
+
+    return {
+      ...p,
+      data: dataStr,
+      horaInicio: horaStr,
+    };
+  });
 }
 
 /**
@@ -412,7 +433,27 @@ export async function listarPedidosAdmin(filtros = {}) {
     orderBy: [{ horaInicio: 'desc' }],
   });
 
-  return pedidos;
+  // Normalizar campos de data/hora para o frontend (evita parse problemático/epoch)
+  return pedidos.map((p) => {
+    const horaInicioDate = new Date(p.horaInicio);
+    const dataDate = new Date(p.data);
+
+    // Usar o campo 'data' armazenado, que possui a data correta
+    const dataStr = !Number.isNaN(dataDate.getTime())
+      ? dataDate.toISOString().split('T')[0]
+      : '';
+
+    // Formatar hora em HH:MM
+    const horaStr = !Number.isNaN(horaInicioDate.getTime())
+      ? `${String(horaInicioDate.getUTCHours()).padStart(2, '0')}:${String(horaInicioDate.getUTCMinutes()).padStart(2, '0')}`
+      : '';
+
+    return {
+      ...p,
+      data: dataStr,
+      horaInicio: horaStr,
+    };
+  });
 }
 
 /**
@@ -468,7 +509,27 @@ export async function buscarPedidos(termo) {
     },
   });
 
-  return pedidos;
+  // Normalizar campos de data/hora para o frontend (evita parse problemático/epoch)
+  return pedidos.map((p) => {
+    const horaInicioDate = new Date(p.horaInicio);
+    const dataDate = new Date(p.data);
+
+    // Usar o campo 'data' armazenado, que possui a data correta
+    const dataStr = !Number.isNaN(dataDate.getTime())
+      ? dataDate.toISOString().split('T')[0]
+      : '';
+
+    // Formatar hora em HH:MM
+    const horaStr = !Number.isNaN(horaInicioDate.getTime())
+      ? `${String(horaInicioDate.getUTCHours()).padStart(2, '0')}:${String(horaInicioDate.getUTCMinutes()).padStart(2, '0')}`
+      : '';
+
+    return {
+      ...p,
+      data: dataStr,
+      horaInicio: horaStr,
+    };
+  });
 }
 
 /**
