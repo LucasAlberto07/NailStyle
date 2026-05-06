@@ -1,25 +1,70 @@
-import { BrowserRouter, Routes, Route, Link, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import Home from "./pages/Home";
 import Login from "./pages/Login";
+import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
+import Agendar from "./pages/Agendar";
+import MeusPedidos from "./pages/MeusPedidos";
+import HistoricoPedido from "./pages/HistoricoPedido";
+import Admin from "./pages/Admin";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
   return (
     <BrowserRouter>
-      {/* Removi o padding e o container fixo daqui */}
-      <div className="min-h-screen w-full">
-        <nav className="p-4 bg-gray-100 dark:bg-gray-900 flex gap-4 shadow-sm">
-          <Link to="/login" className="text-blue-600 dark:text-blue-400 hover:underline">Login</Link>
-          <Link to="/dashboard" className="text-blue-600 dark:text-blue-400 hover:underline">Agendamentos</Link>
-        </nav>
-        
-        <main className="w-full">
-          <Routes>
-            <Route path="/" element={<Login />} />
-            <Route path="/Dashboard" element={<Dashboard />} />
-            <Route path="*" element={<Navigate to="/" />} />
-          </Routes>
-        </main>
-      </div>
+      <Routes>
+        {/* Rotas públicas */}
+        <Route path="/" element={<Home />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+
+        {/* Rotas protegidas - Cliente */}
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/agendar/:servicoId"
+          element={
+            <ProtectedRoute>
+              <Agendar />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/meus-pedidos"
+          element={
+            <ProtectedRoute>
+              <MeusPedidos />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/pedidos/:pedidoId/historico"
+          element={
+            <ProtectedRoute>
+              <HistoricoPedido />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Rotas protegidas - Admin */}
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute requiredRole="ADMIN">
+              <Admin />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Rota 404 */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
     </BrowserRouter>
   );
 }

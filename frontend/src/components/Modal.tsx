@@ -1,24 +1,48 @@
-import { type ReactNode } from "react";
-
 interface ModalProps {
   isOpen: boolean;
-  onClose: () => void;
   title: string;
-  children: ReactNode;
+  children: React.ReactNode;
+  onClose: () => void;
+  onConfirm?: () => void;
+  confirmText?: string;
+  cancelText?: string;
 }
 
-export default function Modal({ isOpen, onClose, title, children }: ModalProps) {
+export default function Modal({
+  isOpen,
+  title,
+  children,
+  onClose,
+  onConfirm,
+  confirmText = "Confirmar",
+  cancelText = "Cancelar",
+}: ModalProps) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50 backdrop-blur-sm">
-      <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
-        <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-pink-50">
-          <h2 className="text-xl font-bold text-gray-800">{title}</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
-        </div>
-        <div className="p-6">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg shadow-lg p-6 max-w-md w-full">
+        <h2 className="text-xl font-bold mb-4">{title}</h2>
+        
+        <div className="mb-6">
           {children}
+        </div>
+
+        <div className="flex justify-end gap-3">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-100"
+          >
+            {cancelText}
+          </button>
+          {onConfirm && (
+            <button
+              onClick={onConfirm}
+              className="px-4 py-2 bg-black text-white rounded hover:bg-gray-800"
+            >
+              {confirmText}
+            </button>
+          )}
         </div>
       </div>
     </div>

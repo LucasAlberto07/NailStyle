@@ -5,6 +5,7 @@ import {
   cancelarPedido,
   listarPedidosAdmin,
   listarPedidosDoUsuario,
+  obterHistoricoPedido,
 } from '../services/PedidoService.js';
 
 class PedidoController {
@@ -98,6 +99,16 @@ class PedidoController {
 
       const pedido = await cancelarPedido(req.params.pedidoId, usuario);
       return res.json(pedido);
+    } catch (error) {
+      return res.status(400).json({ erro: error.message });
+    }
+  }
+
+  // Obtém histórico de um pedido.
+  async obterHistorico(req, res) {
+    try {
+      const historico = await obterHistoricoPedido(req.params.pedidoId);
+      return res.json(historico);
     } catch (error) {
       return res.status(400).json({ erro: error.message });
     }

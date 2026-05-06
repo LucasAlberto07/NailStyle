@@ -493,13 +493,13 @@ export async function calcularIndicadores() {
   const pedidosAbertos = await prisma.pedido.count({
     where: {
       status: {
-        in: ['AGENDADO', 'CONFIRMADO', 'EM_ATENDIMENTO'],
+        in: ['AGENDADO', 'EM_ATENDIMENTO'],
       },
     },
   });
 
   const faturamentoTotal = pedidosFinalizados.reduce(
-    (acc, pedido) => acc + (pedido.valorFinal || 0),
+    (acc, pedido) => acc + (Number(pedido.valorFinal) || 0),
     0,
   );
 
@@ -509,9 +509,47 @@ export async function calcularIndicadores() {
     totalPedidos,
     pedidosFinalizados: pedidosFinalizadosCount,
     pedidosAbertos,
-    faturamentoTotal: Number(faturamentoTotal.toFixed(2)),
-    ticketMedio: Number(ticketMedio.toFixed(2)),
+    faturamentoTotal: parseFloat(faturamentoTotal.toFixed(2)),
+    ticketMedio: parseFloat(ticketMedio.toFixed(2)),
   };
+}
+
+/**
+ * Busca o histórico de status de um pedido
+ * @param {string} pedidoId
+ * @returns {Promise<Array>} histórico do pedido com informações do usuário que fez cada mudança
+ */
+export async function obterHistoricoPedido(pedidoId) {
+  if (!pedidoId) {
+    throw new Error('pedidoId é obrigatório');
+  }
+
+  // Validar se pedido existe
+  const pedido = await prisma.pedido.findUnique({
+    where: { id: pedidoId },
+  });
+
+  if (!pedido) {
+    throw new Error('Pedido não encontrado');
+  }
+
+  // Buscar histórico ordenado cronologicamente
+  const historico = await prisma.historicoStatus.findMany({
+    where: { pedidoId },
+    include: {
+      usuario: {
+        select: {
+          id: true,
+          nome: true,
+          email: true,
+          role: true,
+        },
+      },
+    },
+    orderBy: { alteradoEm: 'asc' },
+  });
+
+  return historico;
 }
 
 /**

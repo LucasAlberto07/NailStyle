@@ -1,106 +1,128 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import * as api from "../services/api";
+import { useAuthStore } from "../stores/authStore";
+import Alert from "../components/Alert";
 
 export default function Register() {
   const navigate = useNavigate();
-  const [name, setName] = useState("");
+  const { setUsuario, setLoading } = useAuthStore();
+
+  const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [erro, setErro] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  const [darkMode, setDarkMode] = useState(() => 
-    typeof window !== 'undefined' ? document.documentElement.classList.contains('dark') : false
-  );
-
-  useEffect(() => {
-    if (darkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [darkMode]);
-
-  const toggleDarkMode = () => {
-    setDarkMode(prev => !prev);
-  };
-
-  const bgEscuro = "src/public/assets/bg-escuro.jpeg";
-  const bgClaro = "src/public/assets/bg-claro.jpeg";
-
-  const handleRegister = (e: React.FormEvent) => {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    navigate("/login");
-  };
+
+    if (!nome || !email || !password || !confirmPassword) {
+      setErro("Preencha todos os campos");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setErro("As senhas não correspondem");
+      return;
+    }
+
+    if (password.length < 6) {
+      setErro("A senha deve ter no mínimo 6 caracteres");
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      setLoading(true);
+      const resultado = await api.registrar(nome, email, password);
+      
+      if (resultado?.usuario) {
+        setUsuario(resultado.usuario);
+        setErro("");
+        navigate("/dashboard");
+      }
+    } catch (error: any) {
+      setErro(error.message || "Erro ao registrar");
+    } finally {
+      setIsLoading(false);
+      setLoading(false);
+    }
+  }
 
   return (
-    <div 
-      className="min-h-screen w-full flex items-center justify-center bg-cover bg-center bg-no-repeat transition-all duration-500"
-      style={{ backgroundImage: `url(${darkMode ? bgEscuro : bgClaro})` }}
-    >
-      <div className="absolute inset-0 bg-white/10 dark:bg-black/40 transition-colors" />
-
-      <button
-        onClick={toggleDarkMode}
-        className="fixed top-5 right-5 z-20 p-3 rounded-2xl bg-white/80 dark:bg-gray-800/80 backdrop-blur-md shadow-lg border border-white/20 dark:border-gray-700 transition-all"
-      >
-        {darkMode ? "☀️" : "🌙"}
-      </button>
-
-      <div className="relative z-10 w-full max-w-md bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl p-8 rounded-[2.5rem] shadow-2xl border border-white/20 dark:border-gray-800">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-black text-pink-600 tracking-tight">Criar Conta 💅</h1>
-          <p className="text-gray-500 dark:text-gray-400 mt-2 font-medium">Cadastre-se para gerenciar sua agenda</p>
-        </div>
-
-        <form onSubmit={handleRegister} className="space-y-5">
-          <div>
-            <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">Nome Completo</label>
-            <input
-              type="text"
-              required
-              className="w-full p-4 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl focus:ring-2 focus:ring-pink-500 outline-none transition-all dark:text-white"
-              placeholder="Como quer ser chamada?"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">E-mail</label>
-            <input
-              type="email"
-              required
-              className="w-full p-4 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl focus:ring-2 focus:ring-pink-500 outline-none transition-all dark:text-white"
-              placeholder="seu@email.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">Senha</label>
-            <input
-              type="password"
-              required
-              className="w-full p-4 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl focus:ring-2 focus:ring-pink-500 outline-none transition-all dark:text-white"
-              placeholder="Crie uma senha forte"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-          </div>
-
-          <button
-            type="submit"
-            className="w-full py-4 bg-pink-600 text-white font-black rounded-2xl hover:bg-pink-700 shadow-lg shadow-pink-500/30 transition-all active:scale-95 uppercase tracking-wider"
+    <div className="flex items-center justify-center min-h-screen bg-gray-100 py-8">
+      <div className="w-80 bg-white p-6 rounded-lg shadow-md">
+        <h1 className="text-2xl font-bold mb-4 text-center">
+          Registre-se - NailStyle
+        </h1>
+        {erro && (
+          <Alert
+            type="error"
+            message={erro}
+            onClose={() => setErro("")}
+          />
+        )}
+        <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+          <input
+            type="text"
+            placeholder="Nome completo"
+            className="border p-2 rounded"
+            value={nome}
+            onChange={(e) => {
+              setNome(e.target.value);
+              setErro("");
+            }}
+            disabled={isLoading}
+          />
+          <input
+            type="email"
+            placeholder="Email"
+            className="border p-2 rounded"
+            value={email}
+            onChange={(e) => {
+              setEmail(e.target.value);
+              setErro("");
+            }}
+            disabled={isLoading}
+          />
+          <input
+            type="password"
+            placeholder="Senha"
+            className="border p-2 rounded"
+            value={password}
+            onChange={(e) => {
+              setPassword(e.target.value);
+              setErro("");
+            }}
+            disabled={isLoading}
+          />
+          <input
+            type="password"
+            placeholder="Confirmar Senha"
+            className="border p-2 rounded"
+            value={confirmPassword}
+            onChange={(e) => {
+              setConfirmPassword(e.target.value);
+              setErro("");
+            }}
+            disabled={isLoading}
+          />
+          <button 
+            type="submit" 
+            className="bg-black text-white p-2 rounded hover:bg-gray-800 disabled:bg-gray-400"
+            disabled={isLoading}
           >
-            Cadastrar Profissional
+            {isLoading ? "Registrando..." : "Registrar"}
           </button>
-
-          <div className="text-center pt-2">
-            <Link to="/login" className="text-sm text-gray-500 dark:text-gray-400 font-bold hover:text-pink-600 transition-colors">
-              ← Voltar para o Login
-            </Link>
-          </div>
         </form>
+        <p className="text-center mt-4 text-sm">
+          Já tem conta?{" "}
+          <Link to="/login" className="text-black font-bold underline">
+            Faça login
+          </Link>
+        </p>
       </div>
     </div>
   );
