@@ -93,22 +93,25 @@ export default function HistoricoPedido() {
   };
 
   const formatarData = (data: string) => {
-    return new Date(data).toLocaleString("pt-BR");
+    if (!data) return "";
+    const dt = new Date(data);
+    if (Number.isNaN(dt.getTime())) return data;
+    return dt.toLocaleString("pt-BR");
   };
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-cover bg-center bg-no-repeat" style={{backgroundImage: `url('/src/public/assets/bg-escuro-blur.jpeg')`}}>
       <Navbar />
 
       <div className="max-w-4xl mx-auto p-6">
         <button
           onClick={() => navigate("/meus-pedidos")}
-          className="mb-6 text-blue-600 hover:text-blue-800 flex items-center gap-2"
+          className="mb-6 text-pink-600 hover:text-pink-700 flex items-center gap-2 font-semibold transition-colors"
         >
-          ← Voltar para Meus Pedidos
+          Voltar para Meus Pedidos
         </button>
 
-        <h1 className="text-3xl font-bold mb-8">Histórico do Pedido</h1>
+        <h1 className="text-4xl font-bold mb-8 text-white text-shadow">Histórico do Pedido</h1>
 
         {erro && (
           <Alert
@@ -123,31 +126,42 @@ export default function HistoricoPedido() {
         ) : (
           <>
             {pedido && (
-              <div className="bg-white p-6 rounded-lg shadow mb-8">
-                <h2 className="text-2xl font-bold mb-4">Informações do Pedido</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-gray-600 text-sm">Serviço</p>
-                    <p className="font-semibold text-lg">{pedido.servico.nome}</p>
+              <div className="bg-white bg-opacity-95 backdrop-blur-sm p-6 rounded-2xl shadow-2xl mb-8 border border-white border-opacity-20">
+                <h2 className="text-2xl font-bold mb-4 text-gray-800">Informações do Pedido</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="bg-pink-50 p-4 rounded-lg">
+                    <p className="text-gray-600 text-sm font-semibold">Serviço</p>
+                    <p className="font-semibold text-lg text-gray-800">{pedido.servico.nome}</p>
                   </div>
-                  <div>
-                    <p className="text-gray-600 text-sm">Data e Hora</p>
-                    <p className="font-semibold">
-                      {new Date(pedido.horaInicio).toLocaleDateString('pt-BR')} às{' '}
-                      {new Date(pedido.horaInicio).toLocaleTimeString('pt-BR', {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
+                  <div className="bg-pink-50 p-4 rounded-lg">
+                    <p className="text-gray-600 text-sm font-semibold">Data e Hora</p>
+                    <p className="font-semibold text-gray-800">
+                      {(() => {
+                        // No listarMeusPedidos() o backend normaliza: pedido.data (YYYY-MM-DD) e pedido.horaInicio (HH:mm)
+                        const data = (pedido as any).data;
+                        const hora = pedido.horaInicio;
+
+                        const dt = new Date(data && hora && hora.includes(':') ? `${data}T${hora}:00` : hora);
+                        if (Number.isNaN(dt.getTime())) {
+                          const dataStr = typeof data === 'string' && data ? data : '';
+                          return dataStr ? `${dataStr} às ${hora}` : hora;
+                        }
+
+                        return `${dt.toLocaleDateString('pt-BR')} às ${dt.toLocaleTimeString('pt-BR', {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}`;
+                      })()}
                     </p>
                   </div>
-                  <div>
-                    <p className="text-gray-600 text-sm">Valor</p>
-                    <p className="font-semibold text-lg">
+                  <div className="bg-pink-50 p-4 rounded-lg">
+                    <p className="text-gray-600 text-sm font-semibold">Valor</p>
+                    <p className="font-semibold text-lg text-transparent bg-clip-text bg-gradient-to-r from-pink-600 to-pink-400">
                       R$ {parseFloat(String(pedido.valorFinal ?? pedido.valorBaseNoMomento)).toFixed(2)}
                     </p>
                   </div>
-                  <div>
-                    <p className="text-gray-600 text-sm">Status Atual</p>
+                  <div className="bg-pink-50 p-4 rounded-lg">
+                    <p className="text-gray-600 text-sm font-semibold">Status Atual</p>
                     <span
                       className={`px-3 py-1 rounded font-semibold inline-block ${getStatusColor(
                         pedido.status
@@ -161,14 +175,14 @@ export default function HistoricoPedido() {
             )}
 
             {historico.length === 0 ? (
-              <div className="bg-white p-8 rounded-lg shadow text-center">
-                <p className="text-gray-500">Nenhum histórico disponível para este pedido</p>
+              <div className="bg-white bg-opacity-95 backdrop-blur-sm p-8 rounded-2xl shadow-2xl text-center border border-white border-opacity-20">
+                <p className="text-gray-500 text-lg">Nenhum histórico disponível para este pedido</p>
               </div>
             ) : (
               <div className="space-y-4">
-                <h2 className="text-2xl font-bold mb-4">Histórico de Alterações</h2>
+                <h2 className="text-2xl font-bold mb-4 text-white text-shadow">Histórico de Alterações</h2>
                 {historico.map((item) => (
-                  <div key={item.id} className="bg-white p-6 rounded-lg shadow">
+                  <div key={item.id} className="bg-white bg-opacity-95 backdrop-blur-sm p-6 rounded-2xl shadow-lg border border-white border-opacity-20">
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-2">

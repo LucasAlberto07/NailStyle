@@ -47,7 +47,7 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-100">
+      <div className="min-h-screen bg-cover bg-center bg-no-repeat" style={{backgroundImage: `url('/src/public/assets/bg-escuro-blur.jpeg')`}}>
         <Navbar />
         <div className="flex items-center justify-center h-96">
           <Loading text="Carregando serviços..." />
@@ -57,16 +57,14 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-cover bg-center bg-no-repeat" style={{backgroundImage: `url('/src/public/assets/bg-escuro-blur.jpeg')`}}>
       <Navbar />
       
       <div className="max-w-6xl mx-auto p-6">
-        <h1 className="text-3xl font-bold mb-2">
-          Bem-vindo ao NailStyle
-        </h1>
-        <p className="text-gray-600 mb-8">
-          Escolha um serviço para continuar
-        </p>
+        <div className="mb-8">
+          <h1 className="text-5xl font-bold mb-2 text-white text-shadow">NailStyle</h1>
+          <p className="text-gray-100 text-lg font-semibold">Escolha um serviço para continuar</p>
+        </div>
 
         {erro && (
           <Alert
@@ -77,8 +75,8 @@ export default function Dashboard() {
         )}
 
         {servicos.length === 0 ? (
-          <div className="bg-white p-8 rounded-lg shadow text-center">
-            <p className="text-gray-500">Nenhum serviço disponível no momento</p>
+          <div className="bg-white bg-opacity-95 backdrop-blur-sm p-8 rounded-2xl shadow-2xl text-center border border-white border-opacity-20">
+            <p className="text-gray-500 text-lg">Nenhum serviço disponível no momento</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

@@ -20,6 +20,33 @@ interface Pedido {
   };
 }
 
+function pad2(n: number) {
+  return String(n).padStart(2, '0');
+}
+
+function formatarDataPedido(pedido: Pedido): string {
+  const hora = pedido.horaInicio;
+  if (/^\d{2}:\d{2}$/.test(hora)) {
+    // pedido.data existe no JSON
+    const d = new Date(pedido.data);
+    if (!Number.isNaN(d.getTime())) return d.toLocaleDateString('pt-BR');
+  }
+
+  const dt = new Date(pedido.data + 'T00:00:00');
+  return Number.isNaN(dt.getTime()) ? pedido.data : dt.toLocaleDateString('pt-BR');
+}
+
+function formatarHoraPedido(pedido: Pedido): string {
+  const hora = pedido.horaInicio;
+  if (/^\d{2}:\d{2}$/.test(hora)) {
+    return hora;
+  }
+
+  const dt = new Date(pedido.horaInicio);
+  if (Number.isNaN(dt.getTime())) return hora;
+  return `${pad2(dt.getHours())}:${pad2(dt.getMinutes())}`;
+}
+
 export default function MeusPedidos() {
   const navigate = useNavigate();
   const { usuario } = useAuthStore();
@@ -40,6 +67,7 @@ export default function MeusPedidos() {
     try {
       setLoading(true);
       const dados = await api.listarMeusPedidos();
+      console.log("MeusPedidos dados:", dados);
       setPedidos(dados || []);
     } catch (error: any) {
       setErro(error.message || "Erro ao carregar pedidos");
@@ -61,7 +89,7 @@ export default function MeusPedidos() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-100">
+      <div className="min-h-screen bg-cover bg-center bg-no-repeat" style={{backgroundImage: `url('/src/public/assets/bg-escuro-blur.jpeg')`}}>
         <Navbar />
         <div className="flex items-center justify-center h-96">
           <Loading text="Carregando pedidos..." />
@@ -71,11 +99,19 @@ export default function MeusPedidos() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-cover bg-center bg-no-repeat" style={{backgroundImage: `url('/src/public/assets/bg-escuro-blur.jpeg')`}}>
       <Navbar />
 
       <div className="max-w-4xl mx-auto p-6">
-        <h1 className="text-3xl font-bold mb-8">Meus Pedidos</h1>
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-4xl font-bold text-white text-shadow">Meus Pedidos</h1>
+          <button
+            onClick={() => navigate("/dashboard")}
+            className="bg-gradient-to-r from-pink-600 to-pink-500 text-white px-4 py-2 rounded-lg font-semibold hover:from-pink-700 hover:to-pink-600 transition-all duration-200"
+          >
+            Voltar aos serviços
+          </button>
+        </div>
 
         {erro && (
           <Alert
@@ -86,51 +122,42 @@ export default function MeusPedidos() {
         )}
 
         {pedidos.length === 0 ? (
-          <div className="bg-white p-8 rounded-lg shadow text-center">
-            <p className="text-gray-500 mb-4">Você ainda não tem pedidos</p>
-            <button
-              onClick={() => navigate("/dashboard")}
-              className="bg-black text-white px-4 py-2 rounded hover:bg-gray-800"
-            >
-              Voltar aos serviços
-            </button>
+          <div className="bg-white bg-opacity-95 backdrop-blur-sm p-8 rounded-2xl shadow-2xl text-center border border-white border-opacity-20">
+            <p className="text-gray-500 text-lg">Você ainda não tem pedidos</p>
           </div>
         ) : (
           <div className="space-y-4">
             {pedidos.map((pedido) => (
               <div
                 key={pedido.id}
-                className="bg-white p-6 rounded-lg shadow flex justify-between items-center"
+                className="bg-white bg-opacity-95 backdrop-blur-sm p-6 rounded-2xl shadow-lg flex justify-between items-center border border-white border-opacity-20 hover:bg-opacity-100 transition-all duration-200"
               >
                 <div>
-                  <h3 className="font-bold text-lg">{pedido.servico.nome}</h3>
+                  <h3 className="font-bold text-lg text-gray-800">{pedido.servico.nome}</h3>
                   <p className="text-gray-600 text-sm">
-                    {new Date(pedido.horaInicio).toLocaleDateString('pt-BR')} às{' '}
-                    {new Date(pedido.horaInicio).toLocaleTimeString('pt-BR', {
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}
+                    {formatarDataPedido(pedido)} às{' '}
+                    {formatarHoraPedido(pedido)}
                   </p>
                   <p className="text-gray-600 text-sm">
-                    Status: <span className="font-semibold">{pedido.status}</span>
+                    Status: <span className="font-semibold text-pink-600">{pedido.status}</span>
                   </p>
                 </div>
 
                 <div className="text-right">
-                  <p className="text-2xl font-bold mb-3">
+                  <p className="text-2xl font-bold mb-4 text-gray-800">
                     R$ {parseFloat(String(pedido.valorFinal ?? pedido.valorBaseNoMomento)).toFixed(2)}
                   </p>
-                  <div className="flex gap-2">
+                  <div className="flex gap-3">
                     <button
                       onClick={() => navigate(`/pedidos/${pedido.id}/historico`)}
-                      className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700"
+                      className="bg-gradient-to-r from-cyan-500 to-blue-600 text-white px-5 py-2 rounded-lg text-sm font-semibold hover:from-cyan-600 hover:to-blue-700 transition-all duration-200 shadow-md hover:shadow-lg"
                     >
-                      Ver Histórico
+                      Histórico
                     </button>
                     {pedido.status === "AGENDADO" && (
                       <button
                         onClick={() => handleCancelar(pedido.id)}
-                        className="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700"
+                        className="bg-gradient-to-r from-rose-500 to-red-600 text-white px-5 py-2 rounded-lg text-sm font-semibold hover:from-rose-600 hover:to-red-700 transition-all duration-200 shadow-md hover:shadow-lg"
                       >
                         Cancelar
                       </button>

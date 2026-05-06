@@ -17,31 +17,31 @@ export default function Navbar() {
   }
 
   return (
-    <nav className="bg-black text-white p-4">
+    <nav className="bg-gradient-to-r from-pink-600 to-pink-500 text-white p-4 shadow-lg">
       <div className="max-w-6xl mx-auto flex justify-between items-center">
-        <h1 className="text-2xl font-bold">NailStyle</h1>
+        <h1 className="text-3xl font-bold text-white">✨ NailStyle</h1>
         
         <div className="flex items-center gap-4">
           {usuario && (
             <>
-              <span className="text-sm">{usuario.nome}</span>
+              <span className="text-sm font-semibold">{usuario.nome}</span>
               {usuario.role === "ADMIN" && (
                 <button
                   onClick={() => navigate("/admin")}
-                  className="bg-gray-700 px-3 py-1 rounded text-sm hover:bg-gray-600"
+                  className="bg-white bg-opacity-20 hover:bg-opacity-30 px-3 py-1 rounded text-sm font-semibold transition-all duration-200"
                 >
                   Admin
                 </button>
               )}
               <button
                 onClick={() => navigate("/meus-pedidos")}
-                className="bg-gray-700 px-3 py-1 rounded text-sm hover:bg-gray-600"
+                className="bg-white bg-opacity-20 hover:bg-opacity-30 px-3 py-1 rounded text-sm font-semibold transition-all duration-200"
               >
                 Meus Pedidos
               </button>
               <button
                 onClick={handleLogout}
-                className="bg-red-600 px-3 py-1 rounded text-sm hover:bg-red-700"
+                className="bg-red-500 hover:bg-red-600 px-3 py-1 rounded text-sm font-semibold transition-all duration-200"
               >
                 Sair
               </button>
