@@ -162,7 +162,7 @@ console.log("Horários normalizados:", (horariosDados as Horario[]).map((h) => (
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-cover bg-center bg-no-repeat" style={{backgroundImage: `url('/src/public/assets/bg-escuro-blur.jpeg')`}}>
+      <div className="min-h-screen bg-cover bg-center bg-no-repeat" style={{backgroundImage: `url('/assets/bg-escuro-blur.jpeg')`}}>
         <Navbar />
         <div className="flex items-center justify-center h-96">
           <Loading text="Carregando serviço e horários..." />
@@ -173,7 +173,7 @@ console.log("Horários normalizados:", (horariosDados as Horario[]).map((h) => (
 
   if (!servico) {
     return (
-      <div className="min-h-screen bg-cover bg-center bg-no-repeat" style={{backgroundImage: `url('/src/public/assets/bg-escuro-blur.jpeg')`}}>
+      <div className="min-h-screen bg-cover bg-center bg-no-repeat" style={{backgroundImage: `url('/assets/bg-escuro-blur.jpeg')`}}>
         <Navbar />
         <div className="max-w-4xl mx-auto p-6">
           <div className="bg-white bg-opacity-95 backdrop-blur-sm p-8 rounded-2xl shadow-2xl text-center border border-white border-opacity-20">
@@ -191,7 +191,7 @@ console.log("Horários normalizados:", (horariosDados as Horario[]).map((h) => (
   }
 
   return (
-    <div className="min-h-screen bg-cover bg-center bg-no-repeat" style={{backgroundImage: `url('/src/public/assets/bg-escuro-blur.jpeg')`}}>
+    <div className="min-h-screen bg-cover bg-center bg-no-repeat" style={{backgroundImage: `url('/assets/bg-escuro-blur.jpeg')`}}>
       <Navbar />
 
       <div className="max-w-4xl mx-auto p-6">

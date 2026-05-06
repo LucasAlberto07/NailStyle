@@ -89,7 +89,7 @@ export default function MeusPedidos() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-cover bg-center bg-no-repeat" style={{backgroundImage: `url('/src/public/assets/bg-escuro-blur.jpeg')`}}>
+      <div className="min-h-screen bg-cover bg-center bg-no-repeat" style={{backgroundImage: `url('/assets/bg-escuro-blur.jpeg')`}}>
         <Navbar />
         <div className="flex items-center justify-center h-96">
           <Loading text="Carregando pedidos..." />
@@ -99,7 +99,7 @@ export default function MeusPedidos() {
   }
 
   return (
-    <div className="min-h-screen bg-cover bg-center bg-no-repeat" style={{backgroundImage: `url('/src/public/assets/bg-escuro-blur.jpeg')`}}>
+    <div className="min-h-screen bg-cover bg-center bg-no-repeat" style={{backgroundImage: `url('/assets/bg-escuro-blur.jpeg')`}}>
       <Navbar />
 
       <div className="max-w-4xl mx-auto p-6">

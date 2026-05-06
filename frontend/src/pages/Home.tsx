@@ -6,7 +6,7 @@ export default function Home() {
   const { usuario } = useAuthStore();
 
   return (
-    <div className="min-h-screen bg-cover bg-center bg-no-repeat" style={{backgroundImage: `url('/src/public/assets/bg-escuro-blur.jpeg')`}}>
+    <div className="min-h-screen bg-cover bg-center bg-no-repeat" style={{backgroundImage: `url('/assets/bg-escuro-blur.jpeg')`}}>
       <div className="max-w-6xl mx-auto px-6 py-20">
         <div className="bg-white bg-opacity-95 backdrop-blur-sm rounded-2xl shadow-2xl p-12 text-center border border-white border-opacity-20">
           <h1 className="text-5xl font-bold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-pink-600 to-pink-400">NailStyle</h1>
