@@ -40,8 +40,8 @@ class DisponibilidadeService {
       data: {
         manicureId,
         data: new Date(data),
-        horaInicio: new Date(`2000-01-01T${horaInicio}:00Z`),
-        horaFim: new Date(`2000-01-01T${horaFim}:00Z`),
+        horaInicio: this._criarDataUTC(horaInicio),
+        horaFim: this._criarDataUTC(horaFim),
         servicosPermitidos: {
           create: servicosIds.map((servicoId) => ({
             servicoId,
@@ -101,8 +101,8 @@ class DisponibilidadeService {
       horariosDisponibles.push({
         disponibilidadeJanelaId: janelaId,
         servicoId: servico.id,
-        horaInicio: new Date(`2000-01-01T${horarioInicioStr}:00Z`),
-        horaFim: new Date(`2000-01-01T${horarioFimStr}:00Z`),
+        horaInicio: this._criarDataUTC(horarioInicioStr),
+        horaFim: this._criarDataUTC(horarioFimStr),
       });
 
       // Avançar para o próximo slot (começa quando este termina)
@@ -289,7 +289,10 @@ class DisponibilidadeService {
       where: {
         servicoId,
         janelaDisponivel: {
-          data: new Date(data),
+          // data vem do front no formato YYYY-MM-DD. 
+          // 'new Date("YYYY-MM-DD")' pode cair no dia anterior/seguinte dependendo do timezone.
+          // Por isso, interpretamos explicitamente como UTC midnight.
+          data: this._parseDateYYYYMMDDToUTCDate(data),
           ativo: true,
         },
         pedidoId: null, // Apenas horários não reservados
@@ -307,16 +310,17 @@ class DisponibilidadeService {
       // Formatar data como YYYY-MM-DD
       const dataJanela = h.janelaDisponivel.data;
       const dataFormatada = dataJanela.toISOString().split('T')[0];
-      
+
       // Formatar horários como HH:MM
       const horaInicioStr = this._formatarHora(h.horaInicio);
       const horaFimStr = this._formatarHora(h.horaFim);
-      
+
       return {
         id: h.id,
         data: dataFormatada,
         horaInicio: horaInicioStr,
         horaFim: horaFimStr,
+        disponivel: !h.pedidoId,
         servico: {
           id: h.servico.id,
           nome: h.servico.nome,
@@ -362,10 +366,14 @@ class DisponibilidadeService {
       data: {
         usuarioId,
         servicoId: horarioDisponivel.servicoId,
+
+        // Garantir que a data/hora salvas no banco reflitam exatamente o slot escolhido.
+        // Usamos os campos do próprio slot (janelaDisponivel.data + horaInicio/horaFim).
         data: horarioDisponivel.janelaDisponivel.data,
         horaInicio: horarioDisponivel.horaInicio,
         horaFim: horaFimAtendimento,
         horaFimComPreparacao: horarioDisponivel.horaFim,
+
         valorBaseNoMomento: horarioDisponivel.servico.valorBase,
         status: 'AGENDADO',
       },
@@ -448,8 +456,8 @@ class DisponibilidadeService {
 
       this._validarHorarios(horaInicio, horaFim);
 
-      atualizacoes.horaInicio = new Date(`2000-01-01T${horaInicio}:00Z`);
-      atualizacoes.horaFim = new Date(`2000-01-01T${horaFim}:00Z`);
+      atualizacoes.horaInicio = this._criarDataUTC(horaInicio);
+      atualizacoes.horaFim = this._criarDataUTC(horaFim);
     }
 
     const janelaAtualizada = await prisma.disponibilidadeJanela.update({
@@ -567,6 +575,7 @@ class DisponibilidadeService {
         await this._gerarHorariosDisponiveisParaServico(
           janelaId,
           servico,
+          janelaAtualizada.data,
           horaInicio,
           horaFim
         );
@@ -632,6 +641,21 @@ class DisponibilidadeService {
   // ===== UTILITÁRIOS PRIVADOS =====
 
   /**
+   * Cria uma data UTC a partir de uma hora em string (HH:mm)
+   * Garante que o horário seja interpretado sempre como UTC
+   * @private
+   */
+  _criarDataUTC(horarioString) {
+    const [horas, minutos] = horarioString.split(':').map(Number);
+    const data = new Date('2000-01-01T00:00:00Z');
+    data.setUTCHours(horas);
+    data.setUTCMinutes(minutos);
+    data.setUTCSeconds(0);
+    data.setUTCMilliseconds(0);
+    return data;
+  }
+
+  /**
    * Valida se os horários são válidos
    * @private
    */
@@ -670,10 +694,30 @@ class DisponibilidadeService {
   }
 
   _formatarHora(dataHora) {
-    return `${String(dataHora.getHours()).padStart(2, '0')}:${String(
-      dataHora.getMinutes()
+    return `${String(dataHora.getUTCHours()).padStart(2, '0')}:${String(
+      dataHora.getUTCMinutes()
     ).padStart(2, '0')}`;
   }
+
+  /**
+   * Converte "YYYY-MM-DD" para uma Date interpretada como UTC midnight.
+   * Isso evita que `new Date("YYYY-MM-DD")` mude de dia por timezone.
+   */
+  _parseDateYYYYMMDDToUTCDate(dataYYYYMMDD) {
+    if (typeof dataYYYYMMDD !== 'string') {
+      throw new Error('Data inválida');
+    }
+
+    const match = dataYYYYMMDD.match(/^\d{4}-\d{2}-\d{2}$/);
+    if (!match) {
+      throw new Error('Formato de data inválido. Use YYYY-MM-DD');
+    }
+
+    const [yyyy, mm, dd] = dataYYYYMMDD.split('-').map(Number);
+    // UTC midnight
+    return new Date(Date.UTC(yyyy, mm - 1, dd, 0, 0, 0, 0));
+  }
 }
+
 
 export default new DisponibilidadeService();

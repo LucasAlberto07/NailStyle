@@ -23,7 +23,15 @@ class AuthController {
       const resultado = await login(email, senha, res);
       return res.json(resultado);
     } catch (error) {
-      return res.status(400).json({ erro: error.message });
+      const message = error?.message || String(error);
+
+      const isDatabaseOrPrismaError =
+        /prisma|prismaclient/i.test(message) ||
+        /can['’]t reach database server|can not reach database server|can't reach database server/i.test(message) ||
+        /ECONN|ETIMEDOUT|EAI_AGAIN|ENOTFOUND|ECONNREFUSED/i.test(message);
+
+      const statusCode = isDatabaseOrPrismaError ? 500 : 400;
+      return res.status(statusCode).json({ erro: message });
     }
   }
 
