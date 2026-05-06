@@ -52,11 +52,14 @@ export default function Register() {
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100 py-8">
-      <div className="w-80 bg-white p-6 rounded-lg shadow-md">
-        <h1 className="text-2xl font-bold mb-4 text-center">
-          Registre-se - NailStyle
-        </h1>
+    <div className="flex items-center justify-center min-h-screen bg-cover bg-center bg-no-repeat py-8" style={{backgroundImage: `url('/src/public/assets/bg-claro-blur.jpeg')`}}>
+      <div className="w-80 bg-white bg-opacity-95 backdrop-blur-sm p-8 rounded-2xl shadow-2xl border border-white border-opacity-20">
+        <div className="text-center mb-6">
+          <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-600 to-pink-400">
+            NailStyle
+          </h1>
+          <p className="text-gray-600 text-sm mt-1">Crie sua conta</p>
+        </div>
         {erro && (
           <Alert
             type="error"
@@ -64,11 +67,11 @@ export default function Register() {
             onClose={() => setErro("")}
           />
         )}
-        <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <input
             type="text"
-            placeholder="Nome completo"
-            className="border p-2 rounded"
+            placeholder="NOME COMPLETO"
+            className="border-0 bg-gray-100 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 placeholder-gray-500 text-sm"
             value={nome}
             onChange={(e) => {
               setNome(e.target.value);
@@ -78,8 +81,8 @@ export default function Register() {
           />
           <input
             type="email"
-            placeholder="Email"
-            className="border p-2 rounded"
+            placeholder="E-MAIL"
+            className="border-0 bg-gray-100 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 placeholder-gray-500 text-sm"
             value={email}
             onChange={(e) => {
               setEmail(e.target.value);
@@ -89,8 +92,8 @@ export default function Register() {
           />
           <input
             type="password"
-            placeholder="Senha"
-            className="border p-2 rounded"
+            placeholder="SENHA"
+            className="border-0 bg-gray-100 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 placeholder-gray-500 text-sm"
             value={password}
             onChange={(e) => {
               setPassword(e.target.value);
@@ -100,8 +103,8 @@ export default function Register() {
           />
           <input
             type="password"
-            placeholder="Confirmar Senha"
-            className="border p-2 rounded"
+            placeholder="CONFIRMAR SENHA"
+            className="border-0 bg-gray-100 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 placeholder-gray-500 text-sm"
             value={confirmPassword}
             onChange={(e) => {
               setConfirmPassword(e.target.value);
@@ -111,16 +114,15 @@ export default function Register() {
           />
           <button 
             type="submit" 
-            className="bg-black text-white p-2 rounded hover:bg-gray-800 disabled:bg-gray-400"
+            className="bg-gradient-to-r from-pink-600 to-pink-500 text-white font-bold p-3 rounded-lg hover:from-pink-700 hover:to-pink-600 disabled:from-gray-400 disabled:to-gray-300 transition-all duration-200 text-sm"
             disabled={isLoading}
           >
-            {isLoading ? "Registrando..." : "Registrar"}
+            {isLoading ? "REGISTRANDO..." : "REGISTRAR"}
           </button>
         </form>
-        <p className="text-center mt-4 text-sm">
-          Já tem conta?{" "}
-          <Link to="/login" className="text-black font-bold underline">
-            Faça login
+        <p className="text-center mt-6 text-sm text-gray-700">
+          Já tem uma conta? <Link to="/login" className="text-pink-600 font-bold hover:text-pink-700 transition-colors">
+            Entrar
           </Link>
         </p>
       </div>

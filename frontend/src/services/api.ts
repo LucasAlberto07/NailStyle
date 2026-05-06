@@ -1,16 +1,42 @@
 const API_URL = "http://localhost:3000";
 
 async function handleResponse(response: Response) {
+  // Ler o body apenas uma vez
+  const bodyText = await response.text();
+  
   if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(errorText || "Erro na requisição");
+    try {
+      // Tentar parsear como JSON
+      const errorData = JSON.parse(bodyText);
+      const mensagem = errorData.mensagem || errorData.message || "Erro na requisição";
+      const erro = new Error(mensagem);
+      (erro as any).statusCode = response.status;
+      throw erro;
+    } catch (parseError) {
+      // Se não for JSON válido, retorna mensagem genérica
+      if (bodyText && !bodyText.includes('"')) {
+        // Se for texto plano (não JSON), usa como é
+        throw new Error(bodyText);
+      }
+      // Mensagens amigáveis por status HTTP
+      const mensagensErro: Record<number, string> = {
+        400: "Dados inválidos. Verifique os campos e tente novamente.",
+        401: "Credenciais inválidas. Email ou senha incorretos.",
+        403: "Acesso negado.",
+        404: "Recurso não encontrado.",
+        409: "Este email já está registrado.",
+        500: "Erro no servidor. Tente novamente mais tarde.",
+      };
+      const mensagem = mensagensErro[response.status] || `Erro ${response.status}`;
+      throw new Error(mensagem);
+    }
   }
 
+  // Sucesso: tentar parsear como JSON
   try {
-    const text = await response.text();
-    return text ? JSON.parse(text) : null;
+    return bodyText ? JSON.parse(bodyText) : null;
   } catch (error) {
-    console.error("Erro ao fazer parse JSON:", error, response);
+    console.error("Erro ao fazer parse JSON:", error);
     throw new Error("Erro ao processar resposta do servidor");
   }
 }

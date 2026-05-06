@@ -101,7 +101,9 @@ export default function Admin() {
       const dados = await api.listarPedidosAdmin();
       setPedidos(dados || []);
     } catch (error: any) {
-      setErro(error.message || "Erro ao carregar pedidos");
+      const mensagem = error.message || "Não foi possível carregar os pedidos";
+      setErro(mensagem);
+      console.error("Erro ao carregar pedidos:", error);
     } finally {
       setPedidosLoading(false);
     }
@@ -111,9 +113,12 @@ export default function Admin() {
     try {
       setServicosLoading(true);
       const dados = await api.listarServicosAdmin();
-      setServicos(dados || []);
+      // Filtrar apenas serviços ativos
+      setServicos((dados || []).filter((servico: Servico) => servico.ativo));
     } catch (error: any) {
-      setErro(error.message || "Erro ao carregar serviços");
+      const mensagem = error.message || "Não foi possível carregar os serviços";
+      setErro(mensagem);
+      console.error("Erro ao carregar serviços:", error);
     } finally {
       setServicosLoading(false);
     }
@@ -125,7 +130,9 @@ export default function Admin() {
       const dados = await api.listarJanelas();
       setJanelas(dados || []);
     } catch (error: any) {
-      setErro(error.message || "Erro ao carregar janelas");
+      const mensagem = error.message || "Não foi possível carregar as janelas de disponibilidade";
+      setErro(mensagem);
+      console.error("Erro ao carregar janelas:", error);
     } finally {
       setJanelasLoading(false);
     }
@@ -154,7 +161,9 @@ export default function Admin() {
       setTimeout(() => setSucesso(""), 3000);
       await carregarServicos();
     } catch (error: any) {
-      setErro(error.message || "Erro ao criar serviço");
+      const mensagem = error.message || "Falha ao criar o serviço. Tente novamente.";
+      setErro(mensagem);
+      console.error("Erro ao criar serviço:", error);
     }
   }
 
@@ -182,7 +191,9 @@ export default function Admin() {
       setTimeout(() => setSucesso(""), 3000);
       await carregarServicos();
     } catch (error: any) {
-      setErro(error.message || "Erro ao atualizar serviço");
+      const mensagem = error.message || "Falha ao atualizar o serviço. Tente novamente.";
+      setErro(mensagem);
+      console.error("Erro ao atualizar serviço:", error);
     }
   }
 
@@ -213,7 +224,9 @@ export default function Admin() {
       setTimeout(() => setSucesso(""), 3000);
       await carregarServicos();
     } catch (error: any) {
-      setErro(error.message || "Erro ao deletar serviço");
+      const mensagem = error.message || "Falha ao desativar o serviço. Tente novamente.";
+      setErro(mensagem);
+      console.error("Erro ao deletar serviço:", error);
     }
   }
 
@@ -274,11 +287,11 @@ export default function Admin() {
       setTimeout(() => setSucesso(""), 3000);
       await carregarJanelas();
     } catch (error: any) {
-      setErro(
-        janelaEmEdicao
-          ? error.message || "Erro ao atualizar janela"
-          : error.message || "Erro ao criar janela"
-      );
+      const mensagem = error.message || (janelaEmEdicao 
+        ? "Falha ao atualizar a janela. Tente novamente." 
+        : "Falha ao criar a janela. Tente novamente.");
+      setErro(mensagem);
+      console.error("Erro ao gerenciar janela:", error);
     }
   }
 
@@ -304,11 +317,13 @@ export default function Admin() {
       // Se finalizando, precisa enviar valorFinal
       const valorFinal = novoStatus === "FINALIZADO" ? valorBase : undefined;
       await api.atualizarStatusPedido(pedidoId, novoStatus, valorFinal);
-      setSucesso("Status atualizado com sucesso!");
+      setSucesso("Status do pedido atualizado com sucesso!");
       setTimeout(() => setSucesso(""), 3000);
       await carregarPedidos();
     } catch (error: any) {
-      setErro(error.message || "Erro ao atualizar status");
+      const mensagem = error.message || "Falha ao atualizar o status do pedido. Tente novamente.";
+      setErro(mensagem);
+      console.error("Erro ao atualizar status:", error);
     }
   }
 
@@ -321,16 +336,18 @@ export default function Admin() {
       setTimeout(() => setSucesso(""), 3000);
       await carregarJanelas();
     } catch (error: any) {
-      setErro(error.message || "Erro ao deletar janela");
+      const mensagem = error.message || "Falha ao deletar a janela. Tente novamente.";
+      setErro(mensagem);
+      console.error("Erro ao deletar janela:", error);
     }
   }
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-cover bg-center bg-no-repeat" style={{backgroundImage: `url('/src/public/assets/bg-escuro-blur.jpeg')`}}>
       <Navbar />
 
       <div className="max-w-6xl mx-auto p-6">
-        <h1 className="text-3xl font-bold mb-8">Administração</h1>
+        <h1 className="text-4xl font-bold mb-8 text-white text-shadow">Administração</h1>
 
         {erro && (
           <Alert
@@ -351,30 +368,30 @@ export default function Admin() {
         <div className="flex gap-2 mb-8 flex-wrap">
           <button
             onClick={() => setAba("pedidos")}
-            className={`px-6 py-2 rounded font-semibold ${
+            className={`px-6 py-2 rounded-lg font-semibold transition-all ${
               aba === "pedidos"
-                ? "bg-black text-white"
-                : "bg-white border border-gray-300"
+                ? "bg-gradient-to-r from-pink-600 to-pink-500 text-white shadow-lg"
+                : "bg-white bg-opacity-95 backdrop-blur-sm border-2 border-white border-opacity-20 text-gray-800 hover:bg-opacity-100"
             }`}
           >
             Pedidos
           </button>
           <button
             onClick={() => setAba("servicos")}
-            className={`px-6 py-2 rounded font-semibold ${
+            className={`px-6 py-2 rounded-lg font-semibold transition-all ${
               aba === "servicos"
-                ? "bg-black text-white"
-                : "bg-white border border-gray-300"
+                ? "bg-gradient-to-r from-pink-600 to-pink-500 text-white shadow-lg"
+                : "bg-white bg-opacity-95 backdrop-blur-sm border-2 border-white border-opacity-20 text-gray-800 hover:bg-opacity-100"
             }`}
           >
             Serviços
           </button>
           <button
             onClick={() => setAba("janelas")}
-            className={`px-6 py-2 rounded font-semibold ${
+            className={`px-6 py-2 rounded-lg font-semibold transition-all ${
               aba === "janelas"
-                ? "bg-black text-white"
-                : "bg-white border border-gray-300"
+                ? "bg-gradient-to-r from-pink-600 to-pink-500 text-white shadow-lg"
+                : "bg-white bg-opacity-95 backdrop-blur-sm border-2 border-white border-opacity-20 text-gray-800 hover:bg-opacity-100"
             }`}
           >
             Janelas de Disponibilidade
@@ -383,25 +400,24 @@ export default function Admin() {
 
         {aba === "pedidos" && (
           <div>
-            <h2 className="text-2xl font-bold mb-6">Gerenciar Pedidos</h2>
+            <h2 className="text-2xl font-bold mb-6 text-white text-shadow">Gerenciar Pedidos</h2>
 
             {pedidosLoading ? (
               <Loading text="Carregando pedidos..." />
             ) : pedidos.length === 0 ? (
-              <div className="bg-white p-8 rounded-lg shadow text-center">
-                <p className="text-gray-500">Nenhum pedido encontrado</p>
+              <div className="bg-white bg-opacity-95 backdrop-blur-sm p-8 rounded-2xl shadow-2xl text-center border border-white border-opacity-20">
+                <p className="text-gray-500 text-lg">Nenhum pedido encontrado</p>
               </div>
             ) : (
               <div className="space-y-4">
                 {pedidos.map((pedido) => (
                   <div
                     key={pedido.id}
-                    className="bg-white p-6 rounded-lg shadow"
-                  >
+                    className="bg-white bg-opacity-95 backdrop-blur-sm p-6 rounded-2xl shadow-lg border border-white border-opacity-20">
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
                       <div>
                         <p className="text-gray-600 text-sm">Cliente</p>
-                        <p className="font-semibold">{pedido.usuario.email}</p>
+                        <p className="font-semibold">{pedido.usuario.nome}</p>
                       </div>
                       <div>
                         <p className="text-gray-600 text-sm">Serviço</p>
@@ -410,11 +426,7 @@ export default function Admin() {
                       <div>
                         <p className="text-gray-600 text-sm">Horário</p>
                         <p className="font-semibold">
-                          {new Date(pedido.horaInicio).toLocaleDateString('pt-BR')} às{' '}
-                          {new Date(pedido.horaInicio).toLocaleTimeString('pt-BR', {
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}
+                          {pedido.data} às {pedido.horaInicio}
                         </p>
                       </div>
                       <div>
@@ -467,18 +479,18 @@ export default function Admin() {
         {aba === "servicos" && (
           <div>
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold">Gerenciar Serviços</h2>
+              <h2 className="text-2xl font-bold text-white text-shadow">Gerenciar Serviços</h2>
               <button
                 onClick={() => setShowFormServico(!showFormServico)}
-                className="bg-black text-white px-4 py-2 rounded hover:bg-gray-800"
+                className="bg-white text-black px-4 py-2 rounded hover:bg-pink-500 hover:text-white transition-all"
               >
                 {showFormServico ? "Cancelar" : "+ Novo Serviço"}
               </button>
             </div>
 
             {showFormServico && (
-              <div className="bg-white p-6 rounded-lg shadow mb-6">
-                <h3 className="text-lg font-bold mb-4">
+              <div className="bg-white bg-opacity-100 backdrop-blur-sm p-8 rounded-2xl shadow-2xl mb-6 border border-white border-opacity-30">
+                <h3 className="text-xl font-bold mb-6 text-gray-900">
                   {servicoEmEdicao ? "Editar Serviço" : "Criar Novo Serviço"}
                 </h3>
                 <form onSubmit={servicoEmEdicao ? handleEditarServico : handleCriarServico} className="space-y-4">
@@ -489,7 +501,7 @@ export default function Admin() {
                     onChange={(e) =>
                       setNovoServico({ ...novoServico, nome: e.target.value })
                     }
-                    className="w-full border border-gray-300 p-2 rounded"
+                    className="w-full bg-white bg-opacity-100 border-2 border-gray-300 p-3 rounded-lg placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all"
                     required
                   />
                   <textarea
@@ -501,7 +513,7 @@ export default function Admin() {
                         descricao: e.target.value,
                       })
                     }
-                    className="w-full border border-gray-300 p-2 rounded"
+                    className="w-full bg-white bg-opacity-100 border-2 border-gray-300 p-3 rounded-lg placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all"
                   />
                   <div className="grid grid-cols-3 gap-4">
                     <input
@@ -515,7 +527,7 @@ export default function Admin() {
                           duracaoMinutos: e.target.value,
                         })
                       }
-                      className="border border-gray-300 p-2 rounded"
+                      className="bg-white bg-opacity-100 border-2 border-gray-300 p-3 rounded-lg placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all"
                       required
                     />
                     <input
@@ -529,7 +541,7 @@ export default function Admin() {
                           tempoPreparacaoMinutos: e.target.value,
                         })
                       }
-                      className="border border-gray-300 p-2 rounded"
+                      className="bg-white bg-opacity-100 border-2 border-gray-300 p-3 rounded-lg placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all"
                     />
                     <input
                       type="number"
@@ -540,14 +552,14 @@ export default function Admin() {
                       onChange={(e) =>
                         setNovoServico({ ...novoServico, valorBase: e.target.value })
                       }
-                      className="border border-gray-300 p-2 rounded"
+                      className="bg-white bg-opacity-100 border-2 border-gray-300 p-3 rounded-lg placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all"
                       required
                     />
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex gap-3 pt-4">
                     <button
                       type="submit"
-                      className="flex-1 bg-black text-white py-2 rounded hover:bg-gray-800"
+                      className="flex-1 bg-gradient-to-r from-pink-600 to-pink-500 text-white py-3 rounded-lg hover:from-pink-700 hover:to-pink-600 font-semibold transition-all shadow-lg"
                     >
                       {servicoEmEdicao ? "Atualizar Serviço" : "Criar Serviço"}
                     </button>
@@ -555,7 +567,7 @@ export default function Admin() {
                       <button
                         type="button"
                         onClick={cancelarEdicaoServico}
-                        className="flex-1 bg-gray-400 text-white py-2 rounded hover:bg-gray-500"
+                        className="flex-1 bg-white bg-opacity-80 text-gray-900 py-3 rounded-lg hover:bg-opacity-100 font-semibold transition-all border border-white border-opacity-40"
                       >
                         Cancelar Edição
                       </button>
@@ -594,7 +606,7 @@ export default function Admin() {
                       <div>
                         <p className="text-gray-600 text-sm">Preço</p>
                         <p className="font-semibold">
-R$ {(parseFloat(servico.valorBase || '0') || 0).toFixed(2)}
+R$ {(parseFloat(String(servico.valorBase ?? 0)) || 0).toFixed(2)}
                         </p>
                       </div>
                       <div>
@@ -606,20 +618,20 @@ R$ {(parseFloat(servico.valorBase || '0') || 0).toFixed(2)}
                               : "bg-red-100 text-red-800"
                           }`}
                         >
-                          {servico.ativo ? "✓ Ativo" : "✗ Inativo"}
+                          {servico.ativo ? "Ativo" : "Inativo"}
                         </span>
                       </div>
                     </div>
                     <div className="flex gap-2">
                       <button
                         onClick={() => abrirEdicaoServico(servico)}
-                        className="flex-1 bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700"
+                        className="flex-1 bg-gradient-to-r from-cyan-500 to-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:from-cyan-600 hover:to-blue-700 transition-all duration-200"
                       >
                         Editar
                       </button>
                       <button
                         onClick={() => handleDeletarServico(servico.id)}
-                        className="flex-1 bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700"
+                        className="flex-1 bg-gradient-to-r from-rose-500 to-red-600 text-white px-4 py-2 rounded-lg font-semibold hover:from-rose-600 hover:to-red-700 transition-all duration-200"
                       >
                         Desativar
                       </button>
@@ -634,21 +646,21 @@ R$ {(parseFloat(servico.valorBase || '0') || 0).toFixed(2)}
         {aba === "janelas" && (
           <div>
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold">Gerenciar Disponibilidades</h2>
+              <h2 className="text-2xl font-bold text-white text-shadow">Gerenciar Disponibilidades</h2>
               <button
                 onClick={() => setShowFormJanela(!showFormJanela)}
-                className="bg-black text-white px-4 py-2 rounded hover:bg-gray-800"
+                className="bg-white text-black px-4 py-2 rounded hover:bg-pink-500 hover:text-white transition-all"
               >
                 {showFormJanela ? "Cancelar" : "+ Nova Janela"}
               </button>
             </div>
 
             {showFormJanela && (
-              <div className="bg-white p-6 rounded-lg shadow mb-6">
-                <h3 className="text-lg font-bold mb-4">Nova Janela de Disponibilidade</h3>
+              <div className="bg-white bg-opacity-100 backdrop-blur-sm p-8 rounded-2xl shadow-2xl mb-6 border border-white border-opacity-30">
+                <h3 className="text-xl font-bold mb-6 text-gray-900">Nova Janela de Disponibilidade</h3>
                 <form onSubmit={handleCriarJanela} className="space-y-4">
                   <div>
-                    <label className="block text-sm font-semibold mb-1">
+                    <label className="block text-sm font-semibold mb-2 text-gray-900">
                       Data *
                     </label>
                     <input
@@ -658,13 +670,13 @@ R$ {(parseFloat(servico.valorBase || '0') || 0).toFixed(2)}
                         setNovaJanela({ ...novaJanela, data: e.target.value })
                       }
                       min={new Date().toISOString().split('T')[0]}
-                      className="w-full border border-gray-300 p-2 rounded"
+                      className="w-full bg-white bg-opacity-100 border-2 border-gray-300 p-3 rounded-lg placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all"
                       required
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-semibold mb-1">
+                      <label className="block text-sm font-semibold mb-2 text-gray-900">
                         Hora Inicial *
                       </label>
                       <input
@@ -676,12 +688,12 @@ R$ {(parseFloat(servico.valorBase || '0') || 0).toFixed(2)}
                             horaInicio: e.target.value,
                           })
                         }
-                        className="w-full border border-gray-300 p-2 rounded"
+                        className="w-full bg-white bg-opacity-100 border-2 border-gray-300 p-3 rounded-lg placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all"
                         required
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-semibold mb-1">
+                      <label className="block text-sm font-semibold mb-2 text-gray-900">
                         Hora Final *
                       </label>
                       <input
@@ -693,21 +705,21 @@ R$ {(parseFloat(servico.valorBase || '0') || 0).toFixed(2)}
                             horaFim: e.target.value,
                           })
                         }
-                        className="w-full border border-gray-300 p-2 rounded"
+                        className="w-full bg-white bg-opacity-100 border-2 border-gray-300 p-3 rounded-lg placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all"
                         required
                       />
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold mb-2">
+                    <label className="block text-sm font-semibold mb-2 text-gray-900">
                       Serviços Disponíveis *
                     </label>
-                    <div className="border border-gray-300 p-3 rounded bg-gray-50 space-y-2">
+                    <div className="bg-white bg-opacity-100 border-2 border-gray-300 p-4 rounded-lg space-y-2">
                       {servicos.length === 0 ? (
-                        <p className="text-gray-500 text-sm">Nenhum serviço disponível</p>
+                        <p className="text-gray-600 text-sm">Nenhum serviço disponível</p>
                       ) : (
                         servicos.map((servico) => (
-                          <label key={servico.id} className="flex items-center gap-2">
+                          <label key={servico.id} className="flex items-center gap-3 cursor-pointer">
                             <input
                               type="checkbox"
                               checked={novaJanela.servicosIds.includes(servico.id)}
@@ -726,19 +738,22 @@ R$ {(parseFloat(servico.valorBase || '0') || 0).toFixed(2)}
                                   });
                                 }
                               }}
+                              className="w-4 h-4 accent-pink-500 cursor-pointer"
                             />
-                            <span className="text-sm">{servico.nome}</span>
+                            <span className="text-sm text-gray-900">{servico.nome}</span>
                           </label>
                         ))
                       )}
                     </div>
                   </div>
-                  <button
-                    type="submit"
-                    className="w-full bg-black text-white py-2 rounded hover:bg-gray-800"
-                  >
-                    Criar Janela
-                  </button>
+                  <div className="flex gap-3 pt-4">
+                    <button
+                      type="submit"
+                      className="flex-1 bg-gradient-to-r from-pink-600 to-pink-500 text-white py-3 rounded-lg hover:from-pink-700 hover:to-pink-600 font-semibold transition-all shadow-lg"
+                    >
+                      Criar Janela
+                    </button>
+                  </div>
                 </form>
               </div>
             )}
@@ -774,12 +789,12 @@ R$ {(parseFloat(servico.valorBase || '0') || 0).toFixed(2)}
                             : "bg-red-100 text-red-800"
                         }`}
                       >
-                        {janela.ativo ? "✓ Ativa" : "✗ Inativa"}
+                        {janela.ativo ? "Ativa" : "Inativa"}
                       </span>
                     </div>
                     <button
                       onClick={() => handleDeletarJanela(janela.id)}
-                      className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700"
+                      className="bg-gradient-to-r from-rose-500 to-red-600 text-white px-4 py-2 rounded-lg font-semibold hover:from-rose-600 hover:to-red-700 transition-all duration-200"
                     >
                       Deletar
                     </button>
